@@ -3,6 +3,7 @@ import { TrendingUp, Clock, CheckCircle2, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useMerchant } from "@/hooks/useMerchant";
+ import RevenueChart from "./RevenueChart";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -110,6 +111,9 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
       )}
+ 
+       {/* Revenue Chart */}
+       <RevenueChart />
     </div>
   );
 };
