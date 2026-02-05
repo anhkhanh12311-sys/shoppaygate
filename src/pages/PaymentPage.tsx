@@ -13,6 +13,8 @@ import {
   AlertCircle,
   ArrowLeft,
   Smartphone,
+   Loader2,
+   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +65,9 @@ const PaymentPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+   const [paymentStatus, setPaymentStatus] = useState<"pending" | "completed" | "failed">("pending");
+   const [isChecking, setIsChecking] = useState(false);
+   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -106,11 +111,121 @@ const PaymentPage = () => {
           bank_account_name: merchant.bank_account_name,
         },
       });
+       setPaymentStatus(paymentLink.status === "completed" ? "completed" : "pending");
       setLoading(false);
     };
 
     fetchPayment();
   }, [code]);
+ 
+   // Subscribe to realtime updates for payment status
+   useEffect(() => {
+     if (!paymentInfo) return;
+ 
+     const channel = supabase
+       .channel(`payment-${paymentInfo.id}`)
+       .on(
+         "postgres_changes",
+         {
+           event: "UPDATE",
+           schema: "public",
+           table: "payment_links",
+           filter: `id=eq.${paymentInfo.id}`,
+         },
+         (payload) => {
+           console.log("Payment link updated:", payload);
+           if (payload.new.status === "completed") {
+             setPaymentStatus("completed");
+             toast({
+               title: "Thanh toán thành công!",
+               description: "Cảm ơn bạn đã thanh toán",
+             });
+           }
+         }
+       )
+       .subscribe();
+ 
+     return () => {
+       supabase.removeChannel(channel);
+     };
+   }, [paymentInfo, toast]);
+ 
+   // Auto-check for payment status periodically
+   useEffect(() => {
+     if (!paymentInfo || paymentStatus === "completed") return;
+ 
+     const checkPayment = async () => {
+       setIsChecking(true);
+       try {
+         // Check if payment link status has been updated
+         const { data: updatedLink } = await supabase
+           .from("payment_links")
+           .select("status")
+           .eq("id", paymentInfo.id)
+           .single();
+ 
+         if (updatedLink?.status === "completed") {
+           setPaymentStatus("completed");
+           toast({
+             title: "Thanh toán thành công!",
+             description: "Cảm ơn bạn đã thanh toán",
+           });
+         }
+         setLastChecked(new Date());
+       } catch (err) {
+         console.error("Error checking payment:", err);
+       }
+       setIsChecking(false);
+     };
+ 
+     // Check immediately on mount
+     checkPayment();
+ 
+     // Then check every 10 seconds
+     const interval = setInterval(checkPayment, 10000);
+ 
+     return () => clearInterval(interval);
+   }, [paymentInfo, paymentStatus, toast]);
+ 
+   const manualCheck = async () => {
+     if (!paymentInfo || isChecking) return;
+     
+     setIsChecking(true);
+     try {
+       // Call the edge function to check with SePay
+       const { data, error } = await supabase.functions.invoke("check-pending-transactions", {
+         body: { payment_link_id: paymentInfo.id },
+       });
+ 
+       if (error) {
+         console.error("Error calling check function:", error);
+       }
+ 
+       // Also refresh local status
+       const { data: updatedLink } = await supabase
+         .from("payment_links")
+         .select("status")
+         .eq("id", paymentInfo.id)
+         .single();
+ 
+       if (updatedLink?.status === "completed") {
+         setPaymentStatus("completed");
+         toast({
+           title: "Thanh toán thành công!",
+           description: "Cảm ơn bạn đã thanh toán",
+         });
+       } else {
+         toast({
+           title: "Chưa nhận được thanh toán",
+           description: "Vui lòng thử lại sau khi đã chuyển khoản",
+         });
+       }
+       setLastChecked(new Date());
+     } catch (err) {
+       console.error("Error checking payment:", err);
+     }
+     setIsChecking(false);
+   };
 
   const transferContent = paymentInfo ? `${paymentInfo.code}` : "";
 
@@ -314,10 +429,57 @@ const PaymentPage = () => {
               </div>
 
               {/* Status */}
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>Đang chờ thanh toán...</span>
-              </div>
+             {paymentStatus === "completed" ? (
+               <motion.div
+                 initial={{ opacity: 0, scale: 0.9 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 className="bg-success/10 border border-success/30 rounded-xl p-6 text-center"
+               >
+                 <CheckCircle2 className="h-12 w-12 mx-auto text-success mb-3" />
+                 <h3 className="text-lg font-bold text-success mb-1">
+                   Thanh toán thành công!
+                 </h3>
+                 <p className="text-sm text-muted-foreground">
+                   Cảm ơn bạn đã thanh toán
+                 </p>
+               </motion.div>
+             ) : (
+               <div className="space-y-3">
+                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                   {isChecking ? (
+                     <>
+                       <Loader2 className="h-4 w-4 animate-spin" />
+                       <span>Đang kiểm tra giao dịch...</span>
+                     </>
+                   ) : (
+                     <>
+                       <Clock className="h-4 w-4" />
+                       <span>Đang chờ thanh toán...</span>
+                     </>
+                   )}
+                 </div>
+                 
+                 <Button
+                   variant="outline"
+                   className="w-full"
+                   onClick={manualCheck}
+                   disabled={isChecking}
+                 >
+                   {isChecking ? (
+                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                   ) : (
+                     <RefreshCw className="mr-2 h-4 w-4" />
+                   )}
+                   Kiểm tra thanh toán
+                 </Button>
+                 
+                 {lastChecked && (
+                   <p className="text-center text-xs text-muted-foreground">
+                     Kiểm tra lần cuối: {format(lastChecked, "HH:mm:ss", { locale: vi })}
+                   </p>
+                 )}
+               </div>
+             )}
             </CardContent>
           </Card>
         </motion.div>

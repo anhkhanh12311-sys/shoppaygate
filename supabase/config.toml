@@ -1,1 +1,7 @@
-project_id = "desgajgtdoxcgxlledww"
+ project_id = "desgajgtdoxcgxlledww"
+ 
+ [functions.sepay-webhook]
+ verify_jwt = false
+ 
+ [functions.check-pending-transactions]
+ verify_jwt = false
