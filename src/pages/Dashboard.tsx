@@ -10,6 +10,7 @@ import {
   History,
   LogOut,
   Menu,
+   Webhook,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,6 +23,7 @@ import BankSettings from "@/components/dashboard/BankSettings";
 import CreatePaymentLink from "@/components/dashboard/CreatePaymentLink";
 import PaymentLinksList from "@/components/dashboard/PaymentLinksList";
 import TransactionHistory from "@/components/dashboard/TransactionHistory";
+ import WebhookSettings from "@/components/dashboard/WebhookSettings";
 
 const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -65,6 +67,7 @@ const Dashboard = () => {
     { value: "create-link", label: "Tạo link thanh toán", icon: Link2 },
     { value: "qr-static", label: "QR tĩnh", icon: QrCode },
     { value: "history", label: "Lịch sử giao dịch", icon: History },
+     { value: "webhook", label: "Webhook", icon: Webhook },
   ];
 
   const SideNav = () => (
@@ -185,6 +188,10 @@ const Dashboard = () => {
             <TabsContent value="history">
               <TransactionHistory />
             </TabsContent>
+             
+             <TabsContent value="webhook">
+               <WebhookSettings />
+             </TabsContent>
           </Tabs>
         </motion.div>
       </main>
