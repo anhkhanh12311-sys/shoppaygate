@@ -1,4 +1,5 @@
  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+ import { createHmac } from "node:crypto";
  
  const corsHeaders = {
    "Access-Control-Allow-Origin": "*",
@@ -159,6 +160,61 @@
          .update({ status: "completed" })
          .eq("id", paymentLink.id);
        console.log("Payment link marked as completed");
+     }
+ 
+     // Send webhook notification to merchant if enabled
+     const merchant = paymentLink.merchants;
+     if (merchant.webhook_enabled && merchant.webhook_url) {
+       console.log("Sending webhook notification to:", merchant.webhook_url);
+       
+       const webhookPayload = {
+         event: "payment.completed",
+         data: {
+           transaction_id: transactionId,
+           payment_link_id: paymentLink.id,
+           payment_code: paymentCode,
+           amount: receivedAmount,
+           transfer_content: payload.content,
+           bank_reference: payload.referenceCode,
+           paid_at: new Date(payload.transactionDate).toISOString(),
+           merchant_id: paymentLink.merchant_id,
+         },
+         timestamp: new Date().toISOString(),
+       };
+ 
+       // Generate HMAC signature if webhook_secret exists
+       let signature = "";
+       if (merchant.webhook_secret) {
+         signature = createHmac("sha256", merchant.webhook_secret)
+           .update(JSON.stringify(webhookPayload))
+           .digest("hex");
+       }
+ 
+       try {
+         const webhookResponse = await fetch(merchant.webhook_url, {
+           method: "POST",
+           headers: {
+             "Content-Type": "application/json",
+             "X-PayGate-Event": "payment.completed",
+             "X-PayGate-Signature": signature,
+           },
+           body: JSON.stringify(webhookPayload),
+         });
+ 
+         if (webhookResponse.ok) {
+           console.log("Webhook notification sent successfully");
+         } else {
+           console.error(
+             "Webhook notification failed:",
+             webhookResponse.status,
+             await webhookResponse.text()
+           );
+         }
+       } catch (webhookError) {
+         const errorMessage = webhookError instanceof Error ? webhookError.message : String(webhookError);
+         console.error("Error sending webhook notification:", errorMessage);
+         // Don't fail the main request if webhook fails
+       }
      }
  
      return new Response(

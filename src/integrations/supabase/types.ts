@@ -27,7 +27,9 @@ export type Database = {
           phone: string | null
           sepay_api_key: string | null
           updated_at: string
+          webhook_enabled: boolean | null
           webhook_secret: string | null
+          webhook_url: string | null
         }
         Insert: {
           auth_user_id: string
@@ -41,7 +43,9 @@ export type Database = {
           phone?: string | null
           sepay_api_key?: string | null
           updated_at?: string
+          webhook_enabled?: boolean | null
           webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Update: {
           auth_user_id?: string
@@ -55,7 +59,9 @@ export type Database = {
           phone?: string | null
           sepay_api_key?: string | null
           updated_at?: string
+          webhook_enabled?: boolean | null
           webhook_secret?: string | null
+          webhook_url?: string | null
         }
         Relationships: []
       }
