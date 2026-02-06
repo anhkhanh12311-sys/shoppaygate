@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      merchant_banks: {
+        Row: {
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          created_at: string
+          id: string
+          is_default: boolean
+          merchant_id: string
+          updated_at: string
+        }
+        Insert: {
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          merchant_id: string
+          updated_at?: string
+        }
+        Update: {
+          bank_account_name?: string
+          bank_account_number?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          merchant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_banks_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           auth_user_id: string
