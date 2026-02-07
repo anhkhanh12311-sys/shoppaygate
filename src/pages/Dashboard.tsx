@@ -3,11 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
-  History, LogOut, Webhook, User, Menu, X,
+  History, LogOut, Webhook, User, Menu, X, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useMerchant } from "@/hooks/useMerchant";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
@@ -30,6 +31,7 @@ const navItems = [
 const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { merchant, loading: merchantLoading } = useMerchant();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
@@ -137,7 +139,16 @@ const Dashboard = () => {
                 <span>{item.label}</span>
               </button>
             ))}
-            <div className="pt-4 border-t mt-4">
+            <div className="pt-4 border-t mt-4 space-y-1">
+              {isAdmin && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>Quản trị viên</span>
+                </button>
+              )}
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
@@ -180,7 +191,16 @@ const Dashboard = () => {
                       <span>{item.label}</span>
                     </button>
                   ))}
-                  <div className="pt-4 border-t mt-4">
+                  <div className="pt-4 border-t mt-4 space-y-1">
+                    {isAdmin && (
+                      <button
+                        onClick={() => { navigate("/admin"); setSidebarOpen(false); }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>Quản trị viên</span>
+                      </button>
+                    )}
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"

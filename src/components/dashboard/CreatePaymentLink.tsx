@@ -12,7 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useToast } from "@/hooks/use-toast";
 import { usePaymentLinks } from "@/hooks/usePaymentLinks";
 import { useMerchant } from "@/hooks/useMerchant";
+import { useMerchantBanks } from "@/hooks/useMerchantBanks";
 import PaymentLinksList from "./PaymentLinksList";
+import CreatedLinkCard from "./CreatedLinkCard";
 
 const schema = z.object({
   amount: z.string().min(1, "Vui lòng nhập số tiền").refine(
@@ -30,22 +32,21 @@ interface CreatePaymentLinkProps {
 
 const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
   const { merchant } = useMerchant();
+  const { defaultBank } = useMerchantBanks();
   const { createPaymentLink, paymentLinks, loading: linksLoading } = usePaymentLinks();
   const [isLoading, setIsLoading] = useState(false);
-  const [createdLink, setCreatedLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [createdLink, setCreatedLink] = useState<{ url: string; code: string; amount: number } | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      amount: "",
-      description: "",
-    },
+    defaultValues: { amount: "", description: "" },
   });
 
+  const hasBankConfig = !!(defaultBank || merchant?.bank_account_number);
+
   const onSubmit = async (data: FormData) => {
-    if (!merchant?.bank_account_number) {
+    if (!hasBankConfig) {
       toast({
         variant: "destructive",
         title: "Lỗi",
@@ -70,23 +71,11 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
       });
     } else if (link) {
       const paymentUrl = `${window.location.origin}/pay/${link.code}`;
-      setCreatedLink(paymentUrl);
+      setCreatedLink({ url: paymentUrl, code: link.code, amount: link.amount });
       form.reset();
       toast({
         title: "Thành công",
         description: isStatic ? "Đã tạo mã QR tĩnh!" : "Đã tạo link thanh toán!",
-      });
-    }
-  };
-
-  const copyToClipboard = async () => {
-    if (createdLink) {
-      await navigator.clipboard.writeText(createdLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Đã sao chép",
-        description: "Link đã được sao chép vào clipboard",
       });
     }
   };
@@ -111,15 +100,9 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {isStatic ? (
-                <>
-                  <QrCode className="h-5 w-5" />
-                  Thông tin QR tĩnh
-                </>
+                <><QrCode className="h-5 w-5" /> Thông tin QR tĩnh</>
               ) : (
-                <>
-                  <Link2 className="h-5 w-5" />
-                  Thông tin thanh toán
-                </>
+                <><Link2 className="h-5 w-5" /> Thông tin thanh toán</>
               )}
             </CardTitle>
             <CardDescription>
@@ -138,19 +121,12 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                     <FormItem>
                       <FormLabel>Số tiền (VNĐ)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="100000"
-                          min="1000"
-                          step="1000"
-                          {...field}
-                        />
+                        <Input type="number" placeholder="100000" min="1000" step="1000" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="description"
@@ -158,31 +134,20 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                     <FormItem>
                       <FormLabel>Mô tả (tùy chọn)</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="VD: Thanh toán đơn hàng #123"
-                          className="resize-none"
-                          rows={3}
-                          {...field}
-                        />
+                        <Textarea placeholder="VD: Thanh toán đơn hàng #123" className="resize-none" rows={3} {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Mô tả sẽ hiển thị cho khách hàng trên trang thanh toán
-                      </FormDescription>
+                      <FormDescription>Mô tả sẽ hiển thị cho khách hàng trên trang thanh toán</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <Button
                   type="submit"
                   className="w-full gradient-primary text-primary-foreground"
-                  disabled={isLoading || !merchant?.bank_account_number}
+                  disabled={isLoading || !hasBankConfig}
                 >
                   {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Đang tạo...
-                    </>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang tạo...</>
                   ) : (
                     <>
                       {isStatic ? <QrCode className="mr-2 h-4 w-4" /> : <Link2 className="mr-2 h-4 w-4" />}
@@ -192,8 +157,7 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                 </Button>
               </form>
             </Form>
-
-            {!merchant?.bank_account_number && (
+            {!hasBankConfig && (
               <p className="text-destructive text-sm mt-4">
                 ⚠️ Vui lòng cấu hình ngân hàng trước khi tạo link
               </p>
@@ -202,56 +166,18 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
         </Card>
 
         {createdLink && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="border-success/50 bg-success/5">
-              <CardHeader>
-                <CardTitle className="text-success flex items-center gap-2">
-                  <Check className="h-5 w-5" />
-                  {isStatic ? "QR Code đã tạo!" : "Link đã tạo!"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-3 bg-background rounded-lg border">
-                  <p className="text-sm break-all font-mono">{createdLink}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={copyToClipboard}
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="mr-2 h-4 w-4" />
-                        Đã sao chép
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-2 h-4 w-4" />
-                        Sao chép
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => window.open(createdLink, "_blank")}
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Mở link
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <CreatedLinkCard
+            url={createdLink.url}
+            code={createdLink.code}
+            amount={createdLink.amount}
+            isStatic={isStatic}
+            bankName={defaultBank?.bank_name || merchant?.bank_name || ""}
+            bankAccountNumber={defaultBank?.bank_account_number || merchant?.bank_account_number || ""}
+            bankAccountName={defaultBank?.bank_account_name || merchant?.bank_account_name || ""}
+          />
         )}
       </div>
 
-      {/* List of created links */}
       <PaymentLinksList links={filteredLinks} loading={linksLoading} isStatic={isStatic} />
     </div>
   );
