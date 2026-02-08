@@ -75,18 +75,16 @@ const Dashboard = () => {
 
   if (!user || !merchant) return null;
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "overview": return <DashboardOverview />;
-      case "account": return <AccountSettings />;
-      case "settings": return <BankSettings />;
-      case "create-link": return <CreatePaymentLink />;
-      case "qr-static": return <CreatePaymentLink isStatic />;
-      case "history": return <TransactionHistory />;
-      case "webhook": return <WebhookSettings />;
-      default: return <DashboardOverview />;
-    }
-  };
+  // Keep all tabs mounted to preserve user data/state, show/hide with CSS
+  const tabs = [
+    { key: "overview", component: <DashboardOverview /> },
+    { key: "account", component: <AccountSettings /> },
+    { key: "settings", component: <BankSettings /> },
+    { key: "create-link", component: <CreatePaymentLink /> },
+    { key: "qr-static", component: <CreatePaymentLink isStatic /> },
+    { key: "history", component: <TransactionHistory /> },
+    { key: "webhook", component: <WebhookSettings /> },
+  ];
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -218,16 +216,16 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* Main content */}
+        {/* Main content - all tabs stay mounted to preserve data */}
         <main className="flex-1 p-4 lg:p-8 min-w-0">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderContent()}
-          </motion.div>
+          {tabs.map((tab) => (
+            <div
+              key={tab.key}
+              className={activeTab === tab.key ? "block" : "hidden"}
+            >
+              {tab.component}
+            </div>
+          ))}
         </main>
       </div>
     </div>

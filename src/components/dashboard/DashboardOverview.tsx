@@ -3,7 +3,8 @@ import { TrendingUp, Clock, CheckCircle2, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useMerchant } from "@/hooks/useMerchant";
- import RevenueChart from "./RevenueChart";
+import { useMerchantBanks } from "@/hooks/useMerchantBanks";
+import RevenueChart from "./RevenueChart";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("vi-VN", {
@@ -15,6 +16,7 @@ const formatCurrency = (amount: number) => {
 const DashboardOverview = () => {
   const { merchant } = useMerchant();
   const { stats, loading } = useTransactions();
+  const { banks, loading: banksLoading } = useMerchantBanks();
 
   const statCards = [
     {
@@ -94,7 +96,7 @@ const DashboardOverview = () => {
       </div>
 
       {/* Bank config status */}
-      {!merchant?.bank_account_number && (
+      {!banksLoading && banks.length === 0 && (
         <Card className="border-warning/50 bg-warning/5">
           <CardContent className="py-6">
             <div className="flex items-start gap-4">
@@ -104,7 +106,7 @@ const DashboardOverview = () => {
               <div>
                 <h3 className="font-semibold mb-1">Chưa cấu hình ngân hàng</h3>
                 <p className="text-muted-foreground text-sm">
-                  Vui lòng cấu hình thông tin ngân hàng để bắt đầu nhận thanh toán. Đi đến tab "Cài đặt ngân hàng" để thiết lập.
+                  Vui lòng thêm tài khoản ngân hàng để bắt đầu nhận thanh toán. Đi đến tab "Ngân hàng" để thiết lập.
                 </p>
               </div>
             </div>
