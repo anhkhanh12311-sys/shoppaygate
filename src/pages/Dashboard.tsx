@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useMerchant } from "@/hooks/useMerchant";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DashboardOverview from "@/components/dashboard/DashboardOverview";
@@ -32,10 +33,12 @@ const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { merchant, loading: merchantLoading } = useMerchant();
   const { isAdmin } = useUserRole();
+  useRealtimeNotifications();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");

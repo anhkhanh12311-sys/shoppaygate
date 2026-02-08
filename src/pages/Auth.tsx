@@ -103,9 +103,9 @@ const Auth = () => {
     } else {
       toast({
         title: "Đăng ký thành công!",
-        description: "Vui lòng kiểm tra email để xác nhận tài khoản.",
+        description: "Tài khoản đã được tạo. Đang chuyển hướng...",
       });
-      setActiveTab("login");
+      navigate("/dashboard");
     }
   };
 
