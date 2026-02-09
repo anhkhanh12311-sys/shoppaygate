@@ -3,23 +3,19 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Shield, Users, BarChart3, Settings, LogOut, Sparkles,
-  Menu, X, UserCheck, UserX, Search, MoreHorizontal,
-  ChevronDown, Activity, Database, Globe,
+  Menu, X, Activity, Database, Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import AdminUserManagement from "@/components/admin/AdminUserManagement";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
@@ -43,7 +39,6 @@ const Admin = () => {
   const [merchants, setMerchants] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
@@ -53,20 +48,21 @@ const Admin = () => {
     }
   }, [user, authLoading, isAdmin, roleLoading, navigate]);
 
+  const fetchData = async () => {
+    setDataLoading(true);
+    const [merchantsRes, txRes, rolesRes] = await Promise.all([
+      supabase.from("merchants").select("*").order("created_at", { ascending: false }),
+      supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
+      supabase.from("user_roles").select("*"),
+    ]);
+    setMerchants(merchantsRes.data || []);
+    setTransactions(txRes.data || []);
+    setUserRoles(rolesRes.data || []);
+    setDataLoading(false);
+  };
+
   useEffect(() => {
     if (!isAdmin) return;
-    const fetchData = async () => {
-      setDataLoading(true);
-      const [merchantsRes, txRes, rolesRes] = await Promise.all([
-        supabase.from("merchants").select("*").order("created_at", { ascending: false }),
-        supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
-        supabase.from("user_roles").select("*"),
-      ]);
-      setMerchants(merchantsRes.data || []);
-      setTransactions(txRes.data || []);
-      setUserRoles(rolesRes.data || []);
-      setDataLoading(false);
-    };
     fetchData();
   }, [isAdmin]);
 
@@ -80,30 +76,7 @@ const Admin = () => {
     navigate("/");
   };
 
-  const assignRole = async (userId: string, role: "admin" | "moderator" | "user") => {
-    const { error } = await supabase.from("user_roles").insert(
-      { user_id: userId, role }
-    );
-    if (error) {
-      toast({ variant: "destructive", title: "Lỗi", description: error.message });
-    } else {
-      toast({ title: "Thành công", description: "Đã cập nhật quyền" });
-      const { data } = await supabase.from("user_roles").select("*");
-      setUserRoles(data || []);
-    }
-  };
-
-  const removeRole = async (userId: string, role: "admin" | "moderator" | "user") => {
-    const { error } = await supabase.from("user_roles").delete()
-      .eq("user_id", userId).eq("role", role as any);
-    if (error) {
-      toast({ variant: "destructive", title: "Lỗi", description: error.message });
-    } else {
-      toast({ title: "Thành công", description: "Đã xóa quyền" });
-      const { data } = await supabase.from("user_roles").select("*");
-      setUserRoles(data || []);
-    }
-  };
+  // Role management is now in AdminUserManagement component
 
   if (authLoading || roleLoading) {
     return (
@@ -120,11 +93,6 @@ const Admin = () => {
   const totalMerchants = merchants.length;
   const totalTransactions = transactions.length;
   const completedTx = transactions.filter(t => t.status === "completed").length;
-
-  const filteredMerchants = merchants.filter(m =>
-    m.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const getUserRole = (authUserId: string) => {
     return userRoles.filter(r => r.user_id === authUserId).map(r => r.role);
@@ -205,92 +173,11 @@ const Admin = () => {
 
       case "users":
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Quản lý người dùng</h1>
-                <p className="text-muted-foreground">Quản lý và phân quyền người dùng</p>
-              </div>
-              <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm kiếm..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tên cửa hàng</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead className="hidden md:table-cell">SĐT</TableHead>
-                        <TableHead>Quyền</TableHead>
-                        <TableHead className="text-right">Thao tác</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMerchants.map(m => {
-                        const roles = getUserRole(m.auth_user_id);
-                        return (
-                          <TableRow key={m.id}>
-                            <TableCell className="font-medium">{m.business_name}</TableCell>
-                            <TableCell>{m.email}</TableCell>
-                            <TableCell className="hidden md:table-cell">{m.phone || "-"}</TableCell>
-                            <TableCell>
-                              {roles.map(r => (
-                                <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="mr-1">
-                                  {r}
-                                </Badge>
-                              ))}
-                              {roles.length === 0 && <Badge variant="outline">user</Badge>}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  {!roles.includes("admin") && (
-                                    <DropdownMenuItem onClick={() => assignRole(m.auth_user_id, "admin")}>
-                                      <UserCheck className="mr-2 h-4 w-4" /> Cấp quyền Admin
-                                    </DropdownMenuItem>
-                                  )}
-                                  {!roles.includes("moderator") && (
-                                    <DropdownMenuItem onClick={() => assignRole(m.auth_user_id, "moderator")}>
-                                      <UserCheck className="mr-2 h-4 w-4" /> Cấp quyền Moderator
-                                    </DropdownMenuItem>
-                                  )}
-                                  {roles.includes("admin") && (
-                                    <DropdownMenuItem onClick={() => removeRole(m.auth_user_id, "admin")} className="text-destructive">
-                                      <UserX className="mr-2 h-4 w-4" /> Xóa quyền Admin
-                                    </DropdownMenuItem>
-                                  )}
-                                  {roles.includes("moderator") && (
-                                    <DropdownMenuItem onClick={() => removeRole(m.auth_user_id, "moderator")} className="text-destructive">
-                                      <UserX className="mr-2 h-4 w-4" /> Xóa quyền Moderator
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <AdminUserManagement
+            merchants={merchants}
+            userRoles={userRoles}
+            onRefresh={fetchData}
+          />
         );
 
       case "system":
