@@ -94,7 +94,7 @@ export const usePaymentLinks = () => {
 
 // Generate a short unique code
 const generateCode = (isStatic: boolean): string => {
-  const prefix = isStatic ? "QR" : "PL";
+  const prefix = "PG-";
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code = prefix;
   for (let i = 0; i < 8; i++) {
