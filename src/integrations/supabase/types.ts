@@ -68,6 +68,7 @@ export type Database = {
           phone: string | null
           sepay_api_key: string | null
           updated_at: string
+          webhook_api_key: string | null
           webhook_enabled: boolean | null
           webhook_secret: string | null
           webhook_url: string | null
@@ -84,6 +85,7 @@ export type Database = {
           phone?: string | null
           sepay_api_key?: string | null
           updated_at?: string
+          webhook_api_key?: string | null
           webhook_enabled?: boolean | null
           webhook_secret?: string | null
           webhook_url?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           phone?: string | null
           sepay_api_key?: string | null
           updated_at?: string
+          webhook_api_key?: string | null
           webhook_enabled?: boolean | null
           webhook_secret?: string | null
           webhook_url?: string | null
