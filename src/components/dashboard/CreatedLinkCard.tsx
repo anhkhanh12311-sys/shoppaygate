@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Check, Copy, ExternalLink, Loader2, Clock, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Copy, ExternalLink, Loader2, Clock, CheckCircle2, PartyPopper, ShieldCheck } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,102 +27,109 @@ const CreatedLinkCard = ({
   const [copied, setCopied] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "completed">("pending");
   const [isChecking, setIsChecking] = useState(false);
+  const [checkCount, setCheckCount] = useState(0);
   const { toast } = useToast();
 
-  // VietQR URL for instant QR display
   const vietQRUrl = bankName && bankAccountNumber
     ? `https://img.vietqr.io/image/${bankName}-${bankAccountNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(code)}&accountName=${encodeURIComponent(bankAccountName)}`
     : null;
 
-  // Auto-poll for transaction status
+  const markCompleted = () => {
+    setPaymentStatus("completed");
+    toast({ title: "🎉 Thanh toán thành công!", description: `Đã nhận ${formatCurrency(amount)}` });
+  };
+
+  // Smart auto-check with escalating intervals
   useEffect(() => {
     if (paymentStatus === "completed") return;
+    const intervals = [5000, 5000, 8000, 8000, 10000, 15000, 20000, 30000];
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    const checkStatus = async () => {
+    const check = async () => {
       setIsChecking(true);
-      const { data } = await supabase
-        .from("payment_links")
-        .select("status")
-        .eq("code", code)
-        .maybeSingle();
-
-      if (data?.status === "completed") {
-        setPaymentStatus("completed");
-        toast({ title: "🎉 Thanh toán thành công!", description: `Đã nhận ${formatCurrency(amount)}` });
-      }
+      try {
+        const { data } = await supabase
+          .from("payment_links").select("status").eq("code", code).maybeSingle();
+        if (data?.status === "completed") { markCompleted(); return; }
+        setCheckCount(c => c + 1);
+      } catch {}
       setIsChecking(false);
+      const delay = intervals[Math.min(checkCount, intervals.length - 1)];
+      timeoutId = setTimeout(check, delay);
     };
 
-    checkStatus();
-    const interval = setInterval(checkStatus, 8000);
-    return () => clearInterval(interval);
-  }, [code, paymentStatus, amount, toast]);
+    timeoutId = setTimeout(check, 3000);
+    return () => clearTimeout(timeoutId);
+  }, [code, paymentStatus, checkCount]);
 
-  // Realtime subscription
+  // Realtime: payment_links
   useEffect(() => {
     const channel = supabase
       .channel(`link-${code}`)
       .on("postgres_changes", {
-        event: "UPDATE",
-        schema: "public",
-        table: "payment_links",
+        event: "UPDATE", schema: "public", table: "payment_links",
         filter: `code=eq.${code}`,
       }, (payload) => {
-        if (payload.new.status === "completed") {
-          setPaymentStatus("completed");
-          toast({ title: "🎉 Thanh toán thành công!", description: `Đã nhận ${formatCurrency(amount)}` });
+        if (payload.new.status === "completed") markCompleted();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [code, amount]);
+
+  // Realtime: transactions INSERT
+  useEffect(() => {
+    const channel = supabase
+      .channel(`tx-link-${code}`)
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "transactions",
+      }, (payload) => {
+        const tx = payload.new as any;
+        if (tx.status === "completed" && tx.transfer_content?.includes(code)) {
+          markCompleted();
         }
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
-  }, [code, amount, toast]);
+  }, [code]);
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast({ title: "Đã sao chép", description: "Link đã được sao chép vào clipboard" });
+    toast({ title: "Đã sao chép", description: "Link đã được sao chép" });
   };
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}>
-      <Card className={`border-success/50 ${paymentStatus === "completed" ? "bg-success/10" : "bg-success/5"}`}>
+      <Card className={paymentStatus === "completed"
+        ? "border-green-500/50 bg-green-500/5 shadow-lg shadow-green-500/10"
+        : "border-primary/30 bg-primary/5"
+      }>
         <CardHeader>
-          <CardTitle className="text-success flex items-center gap-2">
-            {paymentStatus === "completed" ? (
-              <><CheckCircle2 className="h-5 w-5" /> Đã thanh toán!</>
-            ) : (
-              <><Check className="h-5 w-5" /> {isStatic ? "QR Code đã tạo!" : "Link đã tạo!"}</>
-            )}
+          <CardTitle className="flex items-center gap-2">
+            <AnimatePresence mode="wait">
+              {paymentStatus === "completed" ? (
+                <motion.div key="done" initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex items-center gap-2 text-green-600">
+                  <PartyPopper className="h-5 w-5" /> Đã thanh toán thành công!
+                </motion.div>
+              ) : (
+                <motion.div key="pending" className="flex items-center gap-2 text-primary">
+                  <Check className="h-5 w-5" /> {isStatic ? "QR Code đã tạo!" : "Link đã tạo!"}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* QR Code display */}
-          {vietQRUrl && (
+          {/* QR Code */}
+          {vietQRUrl ? (
             <div className="flex justify-center">
               <div className="p-3 bg-white rounded-xl shadow-inner">
-                <img
-                  src={vietQRUrl}
-                  alt="VietQR"
-                  className="w-52 h-52 object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                    const parent = (e.target as HTMLImageElement).parentElement;
-                    if (parent) {
-                      const fallback = document.createElement("div");
-                      fallback.className = "flex items-center justify-center w-52 h-52";
-                      const qrContainer = document.createElement("div");
-                      parent.appendChild(qrContainer);
-                    }
-                  }}
-                />
+                <img src={vietQRUrl} alt="VietQR" className="w-52 h-52 object-contain"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
             </div>
-          )}
-
-          {/* Fallback QR if no VietQR */}
-          {!vietQRUrl && (
+          ) : (
             <div className="flex justify-center">
               <div className="p-3 bg-white rounded-xl">
                 <QRCodeSVG value={url} size={200} />
@@ -129,16 +137,28 @@ const CreatedLinkCard = ({
             </div>
           )}
 
-          {/* Payment status indicator */}
-          {paymentStatus === "pending" && (
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
-              {isChecking ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Đang kiểm tra giao dịch...</>
-              ) : (
-                <><Clock className="h-4 w-4" /> Tự động kiểm tra mỗi 8 giây</>
-              )}
-            </div>
-          )}
+          {/* Status indicator */}
+          <AnimatePresence mode="wait">
+            {paymentStatus === "completed" ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-green-500/10 border border-green-500/30"
+              >
+                <ShieldCheck className="h-4 w-4 text-green-500" />
+                <span className="text-sm font-medium text-green-600">Xác thực tự động thành công</span>
+              </motion.div>
+            ) : (
+              <motion.div key="checking" className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
+                {isChecking ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Đang kiểm tra...</>
+                ) : (
+                  <><div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" /> Tự động kiểm tra realtime</>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Link */}
           <div className="p-3 bg-background rounded-lg border">
