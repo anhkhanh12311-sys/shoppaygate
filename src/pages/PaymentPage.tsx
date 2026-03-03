@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
   Sparkles, Copy, Check, Clock, CheckCircle2, AlertCircle,
-  ArrowLeft, Smartphone, Loader2, RefreshCw,
+  ArrowLeft, Smartphone, Loader2, RefreshCw, PartyPopper, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,9 +21,7 @@ interface PaymentInfo {
   description: string | null;
   status: string;
   merchant_id: string;
-  merchant: {
-    business_name: string;
-  };
+  merchant: { business_name: string };
   bank: {
     bank_name: string;
     bank_account_number: string;
@@ -39,6 +38,35 @@ const bankNames: Record<string, string> = {
   AGRI: "Agribank", SHB: "SHB", MSB: "MSB", OCB: "OCB", EIB: "Eximbank",
 };
 
+// Confetti particle component
+const Confetti = () => (
+  <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+    {Array.from({ length: 40 }).map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute w-3 h-3 rounded-sm"
+        style={{
+          left: `${Math.random() * 100}%`,
+          backgroundColor: ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"][i % 6],
+        }}
+        initial={{ y: -20, opacity: 1, rotate: 0, scale: 1 }}
+        animate={{
+          y: window.innerHeight + 20,
+          opacity: [1, 1, 0],
+          rotate: Math.random() * 720 - 360,
+          x: Math.random() * 200 - 100,
+          scale: [1, 0.8, 0.5],
+        }}
+        transition={{
+          duration: 2 + Math.random() * 2,
+          delay: Math.random() * 0.5,
+          ease: "easeOut",
+        }}
+      />
+    ))}
+  </div>
+);
+
 const PaymentPage = () => {
   const { code } = useParams<{ code: string }>();
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
@@ -48,17 +76,21 @@ const PaymentPage = () => {
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "completed" | "failed">("pending");
   const [isChecking, setIsChecking] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [checkCount, setCheckCount] = useState(0);
   const { toast } = useToast();
+
+  const markCompleted = () => {
+    setPaymentStatus("completed");
+    setShowConfetti(true);
+    toast({ title: "🎉 Thanh toán thành công!", description: "Cảm ơn bạn đã thanh toán" });
+    setTimeout(() => setShowConfetti(false), 4000);
+  };
 
   useEffect(() => {
     const fetchPayment = async () => {
-      if (!code) {
-        setError("Link thanh toán không hợp lệ");
-        setLoading(false);
-        return;
-      }
+      if (!code) { setError("Link thanh toán không hợp lệ"); setLoading(false); return; }
 
-      // 1. Fetch payment link with merchant info
       const { data: paymentLink, error: linkError } = await supabase
         .from("payment_links")
         .select("*, merchants(id, business_name, bank_name, bank_account_number, bank_account_name)")
@@ -67,6 +99,26 @@ const PaymentPage = () => {
         .maybeSingle();
 
       if (linkError || !paymentLink) {
+        // Check if already completed
+        const { data: completedLink } = await supabase
+          .from("payment_links")
+          .select("*, merchants(id, business_name)")
+          .eq("code", code)
+          .eq("status", "completed")
+          .maybeSingle();
+
+        if (completedLink) {
+          const m = completedLink.merchants as any;
+          setPaymentInfo({
+            id: completedLink.id, code: completedLink.code, amount: completedLink.amount,
+            description: completedLink.description, status: "completed",
+            merchant_id: completedLink.merchant_id,
+            merchant: { business_name: m.business_name }, bank: null,
+          });
+          setPaymentStatus("completed");
+          setLoading(false);
+          return;
+        }
         setError("Link thanh toán không tồn tại hoặc đã hết hạn");
         setLoading(false);
         return;
@@ -74,16 +126,16 @@ const PaymentPage = () => {
 
       const merchant = paymentLink.merchants as any;
 
-      // 2. Fetch the merchant's default bank from merchant_banks table
+      // Fetch default bank
+      let bankInfo = null;
       const { data: defaultBank } = await supabase
         .from("merchant_banks")
         .select("bank_name, bank_account_number, bank_account_name")
         .eq("merchant_id", paymentLink.merchant_id)
         .eq("is_default", true)
         .maybeSingle();
+      bankInfo = defaultBank;
 
-      // 3. If no default bank, try first bank
-      let bankInfo = defaultBank;
       if (!bankInfo) {
         const { data: firstBank } = await supabase
           .from("merchant_banks")
@@ -95,7 +147,6 @@ const PaymentPage = () => {
         bankInfo = firstBank;
       }
 
-      // 4. Fallback to legacy merchant columns
       if (!bankInfo && merchant?.bank_account_number) {
         bankInfo = {
           bank_name: merchant.bank_name || "",
@@ -105,11 +156,8 @@ const PaymentPage = () => {
       }
 
       setPaymentInfo({
-        id: paymentLink.id,
-        code: paymentLink.code,
-        amount: paymentLink.amount,
-        description: paymentLink.description,
-        status: paymentLink.status,
+        id: paymentLink.id, code: paymentLink.code, amount: paymentLink.amount,
+        description: paymentLink.description, status: paymentLink.status,
         merchant_id: paymentLink.merchant_id,
         merchant: { business_name: merchant.business_name },
         bank: bankInfo,
@@ -117,48 +165,62 @@ const PaymentPage = () => {
       setPaymentStatus(paymentLink.status === "completed" ? "completed" : "pending");
       setLoading(false);
     };
-
     fetchPayment();
   }, [code]);
 
-  // Realtime updates
+  // Realtime subscription
   useEffect(() => {
-    if (!paymentInfo) return;
+    if (!paymentInfo || paymentStatus === "completed") return;
     const channel = supabase
       .channel(`payment-${paymentInfo.id}`)
       .on("postgres_changes", {
         event: "UPDATE", schema: "public", table: "payment_links",
         filter: `id=eq.${paymentInfo.id}`,
       }, (payload) => {
-        if (payload.new.status === "completed") {
-          setPaymentStatus("completed");
-          toast({ title: "Thanh toán thành công!", description: "Cảm ơn bạn đã thanh toán" });
-        }
+        if (payload.new.status === "completed") markCompleted();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [paymentInfo, toast]);
+  }, [paymentInfo, paymentStatus]);
 
-  // Auto-check every 10s
+  // Also listen for new transactions
   useEffect(() => {
     if (!paymentInfo || paymentStatus === "completed") return;
+    const channel = supabase
+      .channel(`tx-${paymentInfo.id}`)
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "transactions",
+        filter: `payment_link_id=eq.${paymentInfo.id}`,
+      }, (payload) => {
+        if ((payload.new as any).status === "completed") markCompleted();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [paymentInfo, paymentStatus]);
+
+  // Smart auto-check: faster at start, slower over time
+  useEffect(() => {
+    if (!paymentInfo || paymentStatus === "completed") return;
+    const intervals = [5000, 5000, 8000, 8000, 10000, 15000, 20000, 30000]; // escalating
+    let timeoutId: ReturnType<typeof setTimeout>;
+
     const check = async () => {
       setIsChecking(true);
       try {
         const { data } = await supabase
           .from("payment_links").select("status").eq("id", paymentInfo.id).single();
-        if (data?.status === "completed") {
-          setPaymentStatus("completed");
-          toast({ title: "Thanh toán thành công!", description: "Cảm ơn bạn đã thanh toán" });
-        }
+        if (data?.status === "completed") { markCompleted(); return; }
         setLastChecked(new Date());
+        setCheckCount(c => c + 1);
       } catch {}
       setIsChecking(false);
+      const delay = intervals[Math.min(checkCount, intervals.length - 1)];
+      timeoutId = setTimeout(check, delay);
     };
-    check();
-    const interval = setInterval(check, 10000);
-    return () => clearInterval(interval);
-  }, [paymentInfo, paymentStatus, toast]);
+
+    timeoutId = setTimeout(check, 3000); // first check after 3s
+    return () => clearTimeout(timeoutId);
+  }, [paymentInfo, paymentStatus, checkCount]);
 
   const manualCheck = async () => {
     if (!paymentInfo || isChecking) return;
@@ -170,10 +232,9 @@ const PaymentPage = () => {
       const { data } = await supabase
         .from("payment_links").select("status").eq("id", paymentInfo.id).single();
       if (data?.status === "completed") {
-        setPaymentStatus("completed");
-        toast({ title: "Thanh toán thành công!", description: "Cảm ơn bạn đã thanh toán" });
+        markCompleted();
       } else {
-        toast({ title: "Chưa nhận được thanh toán", description: "Vui lòng thử lại sau khi đã chuyển khoản" });
+        toast({ title: "Chưa nhận được thanh toán", description: "Hệ thống sẽ tiếp tục kiểm tra tự động" });
       }
       setLastChecked(new Date());
     } catch {}
@@ -185,8 +246,7 @@ const PaymentPage = () => {
 
   const getVietQRUrl = () => {
     if (!paymentInfo || !bank) return "";
-    const content = encodeURIComponent(transferContent);
-    return `https://img.vietqr.io/image/${bank.bank_name}-${bank.bank_account_number}-compact2.png?amount=${paymentInfo.amount}&addInfo=${content}&accountName=${encodeURIComponent(bank.bank_account_name)}`;
+    return `https://img.vietqr.io/image/${bank.bank_name}-${bank.bank_account_number}-compact2.png?amount=${paymentInfo.amount}&addInfo=${encodeURIComponent(transferContent)}&accountName=${encodeURIComponent(bank.bank_account_name)}`;
   };
 
   const copyToClipboard = async (text: string, label: string) => {
@@ -200,7 +260,7 @@ const PaymentPage = () => {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
-          <CardHeader><Skeleton className="h-8 w-48 mx-auto" /><Skeleton className="h-4 w-32 mx-auto mt-2" /></CardHeader>
+          <CardHeader><Skeleton className="h-8 w-48 mx-auto" /></CardHeader>
           <CardContent className="space-y-4"><Skeleton className="h-64 w-64 mx-auto" /><Skeleton className="h-10 w-full" /></CardContent>
         </Card>
       </div>
@@ -222,6 +282,32 @@ const PaymentPage = () => {
     );
   }
 
+  // Already completed (no bank needed)
+  if (paymentStatus === "completed" && !bank) {
+    return (
+      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+        <AnimatePresence>{showConfetti && <Confetti />}</AnimatePresence>
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-md">
+          <Card className="shadow-xl border-0">
+            <CardContent className="py-12 text-center">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-green-500" />
+                </div>
+              </motion.div>
+              <h2 className="text-2xl font-bold text-green-600 mb-2">Đã thanh toán thành công!</h2>
+              <p className="text-3xl font-bold mb-2">{formatCurrency(paymentInfo.amount)}</p>
+              <p className="text-muted-foreground">Thanh toán cho {paymentInfo.merchant.business_name}</p>
+              <Badge className="mt-4 bg-green-500/20 text-green-600">
+                <ShieldCheck className="h-3 w-3 mr-1" /> Đã xác thực
+              </Badge>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!bank) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
@@ -229,8 +315,7 @@ const PaymentPage = () => {
           <CardContent className="py-10">
             <AlertCircle className="h-16 w-16 mx-auto text-yellow-500 mb-4" />
             <h2 className="text-xl font-bold mb-2">Chưa cấu hình ngân hàng</h2>
-            <p className="text-muted-foreground mb-6">Người bán chưa thiết lập thông tin ngân hàng nhận tiền</p>
-            <Link to="/"><Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" />Về trang chủ</Button></Link>
+            <p className="text-muted-foreground mb-6">Người bán chưa thiết lập thông tin ngân hàng</p>
           </CardContent>
         </Card>
       </div>
@@ -239,6 +324,7 @@ const PaymentPage = () => {
 
   return (
     <div className="min-h-screen gradient-hero py-8 px-4">
+      <AnimatePresence>{showConfetti && <Confetti />}</AnimatePresence>
       <div className="container max-w-lg mx-auto">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <Link to="/" className="inline-flex items-center gap-2">
@@ -258,6 +344,7 @@ const PaymentPage = () => {
             </CardHeader>
 
             <CardContent className="pt-6 space-y-6">
+              {/* Amount */}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-1">Số tiền</p>
                 <p className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
@@ -265,17 +352,15 @@ const PaymentPage = () => {
                 </p>
               </div>
 
+              {/* QR Code */}
               <div className="flex justify-center">
                 <div className="p-4 bg-white rounded-2xl shadow-inner">
-                  <img
-                    src={getVietQRUrl()}
-                    alt="VietQR Code"
-                    className="w-64 h-64 object-contain"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
+                  <img src={getVietQRUrl()} alt="VietQR" className="w-64 h-64 object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 </div>
               </div>
 
+              {/* Instructions */}
               <div className="bg-muted/50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Smartphone className="h-4 w-4 text-primary" />
@@ -288,6 +373,7 @@ const PaymentPage = () => {
                 </ol>
               </div>
 
+              {/* Bank info */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <div>
@@ -300,8 +386,8 @@ const PaymentPage = () => {
                     <p className="text-xs text-muted-foreground">Số tài khoản</p>
                     <p className="font-medium font-mono">{bank.bank_account_number}</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(bank.bank_account_number, "Số tài khoản")}>
-                    {copied === "Số tài khoản" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(bank.bank_account_number, "STK")}>
+                    {copied === "STK" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
@@ -309,8 +395,8 @@ const PaymentPage = () => {
                     <p className="text-xs text-muted-foreground">Chủ tài khoản</p>
                     <p className="font-medium">{bank.bank_account_name}</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(bank.bank_account_name, "Tên chủ TK")}>
-                    {copied === "Tên chủ TK" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(bank.bank_account_name, "CTK")}>
+                    {copied === "CTK" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
@@ -318,38 +404,64 @@ const PaymentPage = () => {
                     <p className="text-xs text-muted-foreground">Nội dung chuyển khoản</p>
                     <p className="font-medium font-mono text-primary">{transferContent}</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(transferContent, "Nội dung CK")}>
-                    {copied === "Nội dung CK" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  <Button variant="ghost" size="icon" onClick={() => copyToClipboard(transferContent, "NDCK")}>
+                    {copied === "NDCK" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
 
-              {paymentStatus === "completed" ? (
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 text-center">
-                  <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-3" />
-                  <h3 className="text-lg font-bold text-green-600 mb-1">Thanh toán thành công!</h3>
-                  <p className="text-sm text-muted-foreground">Cảm ơn bạn đã thanh toán</p>
-                </motion.div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    {isChecking ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /><span>Đang kiểm tra giao dịch...</span></>
-                    ) : (
-                      <><Clock className="h-4 w-4" /><span>Đang chờ thanh toán...</span></>
-                    )}
-                  </div>
-                  <Button variant="outline" className="w-full" onClick={manualCheck} disabled={isChecking}>
-                    {isChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                    Kiểm tra thanh toán
-                  </Button>
-                  {lastChecked && (
-                    <p className="text-center text-xs text-muted-foreground">
-                      Kiểm tra lần cuối: {format(lastChecked, "HH:mm:ss", { locale: vi })}
-                    </p>
-                  )}
-                </div>
-              )}
+              {/* Payment status */}
+              <AnimatePresence mode="wait">
+                {paymentStatus === "completed" ? (
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.5 }}
+                    className="bg-green-500/10 border border-green-500/30 rounded-xl p-6 text-center"
+                  >
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", delay: 0.1 }}
+                    >
+                      <PartyPopper className="h-14 w-14 mx-auto text-green-500 mb-3" />
+                    </motion.div>
+                    <h3 className="text-xl font-bold text-green-600 mb-1">Thanh toán thành công!</h3>
+                    <p className="text-sm text-muted-foreground mb-3">Giao dịch đã được xác thực tự động</p>
+                    <Badge className="bg-green-500/20 text-green-600">
+                      <ShieldCheck className="h-3 w-3 mr-1" /> Xác thực bởi hệ thống
+                    </Badge>
+                  </motion.div>
+                ) : (
+                  <motion.div key="pending" className="space-y-3">
+                    {/* Auto-check progress */}
+                    <div className="relative rounded-lg border p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Trạng thái</span>
+                        <Badge variant="outline" className="text-yellow-600 border-yellow-500/30">
+                          <Clock className="h-3 w-3 mr-1" /> Đang chờ
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {isChecking ? (
+                          <><Loader2 className="h-3 w-3 animate-spin" /> Đang kiểm tra...</>
+                        ) : (
+                          <><div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" /> Tự động kiểm tra</>
+                        )}
+                        {lastChecked && (
+                          <span className="ml-auto">Lần cuối: {format(lastChecked, "HH:mm:ss", { locale: vi })}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <Button variant="outline" className="w-full" onClick={manualCheck} disabled={isChecking}>
+                      {isChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                      Kiểm tra ngay
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
         </motion.div>
