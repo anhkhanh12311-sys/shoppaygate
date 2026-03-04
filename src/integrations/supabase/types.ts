@@ -55,6 +55,62 @@ export type Database = {
           },
         ]
       }
+      merchant_stores: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          description: string | null
+          footer_text: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          merchant_id: string
+          primary_color: string | null
+          secondary_color: string | null
+          slug: string
+          store_name: string
+          updated_at: string
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          footer_text?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          merchant_id: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug: string
+          store_name: string
+          updated_at?: string
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          footer_text?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          merchant_id?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string
+          store_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_stores_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           auth_user_id: string

@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
-  History, LogOut, Webhook, User, Menu, X, Shield,
+  History, LogOut, Webhook, User, Menu, X, Shield, Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,9 +18,11 @@ import CreatePaymentLink from "@/components/dashboard/CreatePaymentLink";
 import TransactionHistory from "@/components/dashboard/TransactionHistory";
 import WebhookSettings from "@/components/dashboard/WebhookSettings";
 import AccountSettings from "@/components/dashboard/AccountSettings";
+import StoreSettings from "@/components/dashboard/StoreSettings";
 
 const navItems = [
   { value: "overview", label: "Tổng quan", icon: LayoutDashboard },
+  { value: "store", label: "Cửa hàng", icon: Store },
   { value: "account", label: "Tài khoản", icon: User },
   { value: "settings", label: "Ngân hàng", icon: Settings },
   { value: "create-link", label: "Tạo link", icon: Link2 },
@@ -78,6 +80,7 @@ const Dashboard = () => {
   // Keep all tabs mounted to preserve user data/state, show/hide with CSS
   const tabs = [
     { key: "overview", component: <DashboardOverview /> },
+    { key: "store", component: <StoreSettings /> },
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
     { key: "create-link", component: <CreatePaymentLink /> },
