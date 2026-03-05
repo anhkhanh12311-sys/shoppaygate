@@ -286,7 +286,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_merchant_payment_links: {
+        Args: {
+          p_is_static?: boolean
+          p_merchant_id: string
+          p_status?: string
+        }
+        Returns: number
+      }
+      count_merchant_transactions: {
+        Args: { p_merchant_id: string; p_status?: string }
+        Returns: number
+      }
+      get_admin_stats: { Args: never; Returns: Json }
+      get_daily_revenue: {
+        Args: { p_days?: number }
+        Returns: {
+          day: string
+          revenue: number
+          tx_count: number
+        }[]
+      }
       get_merchant_id_for_auth_user: { Args: never; Returns: string }
+      get_top_merchants: {
+        Args: { p_limit?: number }
+        Returns: {
+          business_name: string
+          email: string
+          merchant_id: string
+          total_revenue: number
+          tx_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
