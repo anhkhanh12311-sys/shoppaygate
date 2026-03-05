@@ -178,7 +178,7 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
         )}
       </div>
 
-      <PaymentLinksList links={filteredLinks} loading={linksLoading} isStatic={isStatic} />
+      <PaymentLinksList isStatic={isStatic} />
     </div>
   );
 };
