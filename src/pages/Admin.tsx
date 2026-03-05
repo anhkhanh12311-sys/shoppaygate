@@ -2,26 +2,24 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Shield, Users, BarChart3, Settings, LogOut, Sparkles,
-  Menu, X, Activity, Database, Globe,
+  Shield, Users, BarChart3, Settings, LogOut,
+  Menu, X, Activity, Database, Globe, Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUserManagement from "@/components/admin/AdminUserManagement";
-
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+import AdminTransactions from "@/components/admin/AdminTransactions";
 
 const adminNavItems = [
   { value: "overview", label: "Tổng quan", icon: BarChart3 },
+  { value: "transactions", label: "Giao dịch", icon: Receipt },
   { value: "users", label: "Người dùng", icon: Users },
   { value: "system", label: "Hệ thống", icon: Settings },
 ];
@@ -31,13 +29,11 @@ const Admin = () => {
   const { isAdmin, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Data states
+  // Data for user management
   const [merchants, setMerchants] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
   const [userRoles, setUserRoles] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -50,13 +46,11 @@ const Admin = () => {
 
   const fetchData = async () => {
     setDataLoading(true);
-    const [merchantsRes, txRes, rolesRes] = await Promise.all([
+    const [merchantsRes, rolesRes] = await Promise.all([
       supabase.from("merchants").select("*").order("created_at", { ascending: false }),
-      supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(100),
       supabase.from("user_roles").select("*"),
     ]);
     setMerchants(merchantsRes.data || []);
-    setTransactions(txRes.data || []);
     setUserRoles(rolesRes.data || []);
     setDataLoading(false);
   };
@@ -76,8 +70,6 @@ const Admin = () => {
     navigate("/");
   };
 
-  // Role management is now in AdminUserManagement component
-
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -88,89 +80,12 @@ const Admin = () => {
 
   if (!user || !isAdmin) return null;
 
-  // Stats
-  const totalRevenue = transactions.filter(t => t.status === "completed").reduce((s, t) => s + t.amount, 0);
-  const totalMerchants = merchants.length;
-  const totalTransactions = transactions.length;
-  const completedTx = transactions.filter(t => t.status === "completed").length;
-
-  const getUserRole = (authUserId: string) => {
-    return userRoles.filter(r => r.user_id === authUserId).map(r => r.role);
-  };
-
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Quản trị hệ thống</h1>
-              <p className="text-muted-foreground">Tổng quan hoạt động của toàn bộ hệ thống</p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {[
-                { title: "Tổng doanh thu", value: formatCurrency(totalRevenue), icon: BarChart3, gradient: "from-primary to-secondary" },
-                { title: "Merchants", value: totalMerchants, icon: Users, gradient: "from-success to-accent" },
-                { title: "Giao dịch", value: totalTransactions, icon: Activity, gradient: "from-warning to-secondary" },
-                { title: "Thành công", value: `${completedTx}/${totalTransactions}`, icon: Database, gradient: "from-accent to-primary" },
-              ].map((stat, i) => (
-                <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                  <Card className="relative overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-5`} />
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                      <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${stat.gradient} flex items-center justify-center`}>
-                        <stat.icon className="h-5 w-5 text-white" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{dataLoading ? <Skeleton className="h-8 w-24" /> : stat.value}</div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Recent merchants */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Merchants gần đây</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tên</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Ngân hàng</TableHead>
-                        <TableHead>Quyền</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {merchants.slice(0, 5).map(m => (
-                        <TableRow key={m.id}>
-                          <TableCell className="font-medium">{m.business_name}</TableCell>
-                          <TableCell>{m.email}</TableCell>
-                          <TableCell>{m.bank_name || "-"}</TableCell>
-                          <TableCell>
-                            {getUserRole(m.auth_user_id).map(r => (
-                              <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="mr-1">
-                                {r}
-                              </Badge>
-                            ))}
-                            {getUserRole(m.auth_user_id).length === 0 && <Badge variant="outline">user</Badge>}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
+        return <AdminOverview />;
+      case "transactions":
+        return <AdminTransactions />;
       case "users":
         return (
           <AdminUserManagement
@@ -179,7 +94,6 @@ const Admin = () => {
             onRefresh={fetchData}
           />
         );
-
       case "system":
         return (
           <div className="space-y-6">
@@ -198,21 +112,18 @@ const Admin = () => {
                 <CardContent className="space-y-3">
                   <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
                     <span className="text-sm">Merchants</span>
-                    <span className="font-medium">{totalMerchants}</span>
+                    <span className="font-medium">{merchants.length}</span>
                   </div>
                   <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">Giao dịch</span>
-                    <span className="font-medium">{totalTransactions}</span>
+                    <span className="text-sm">Database Indexes</span>
+                    <Badge className="bg-success/20 text-success">Tối ưu</Badge>
                   </div>
                   <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">Tỉ lệ thành công</span>
-                    <span className="font-medium">
-                      {totalTransactions > 0 ? Math.round((completedTx / totalTransactions) * 100) : 0}%
-                    </span>
+                    <span className="text-sm">Phân trang</span>
+                    <Badge className="bg-success/20 text-success">Server-side</Badge>
                   </div>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -238,7 +149,6 @@ const Admin = () => {
             </div>
           </div>
         );
-
       default:
         return null;
     }
