@@ -33,7 +33,7 @@ interface CreatePaymentLinkProps {
 const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
   const { merchant } = useMerchant();
   const { defaultBank } = useMerchantBanks();
-  const { createPaymentLink, paymentLinks, loading: linksLoading } = usePaymentLinks();
+  const { createPaymentLink } = usePaymentLinks();
   const [isLoading, setIsLoading] = useState(false);
   const [createdLink, setCreatedLink] = useState<{ url: string; code: string; amount: number } | null>(null);
   const { toast } = useToast();
@@ -80,7 +80,7 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
     }
   };
 
-  const filteredLinks = paymentLinks.filter((link) => link.is_static === isStatic);
+  
 
   return (
     <div className="space-y-6">
