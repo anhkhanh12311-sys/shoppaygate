@@ -35,7 +35,7 @@ const SmartFilter = () => {
   const fetchMismatched = useCallback(async () => {
     if (!merchant) return;
     setLoading(true);
-    const { data, error } = await supabase.rpc("get_mismatched_transactions", {
+    const { data, error } = await (supabase as any).rpc("get_mismatched_transactions", {
       p_merchant_id: merchant.id,
       p_limit: 100,
     });

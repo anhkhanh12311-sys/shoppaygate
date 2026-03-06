@@ -40,7 +40,7 @@ export const useStaffManagement = () => {
   const fetchStaff = useCallback(async () => {
     if (!merchant) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("merchant_staff")
       .select("*")
       .eq("merchant_id", merchant.id)
@@ -54,11 +54,11 @@ export const useStaffManagement = () => {
 
   const inviteStaff = async (email: string, displayName: string, permissions: StaffPermissions) => {
     if (!merchant) return false;
-    const { error } = await supabase.from("merchant_staff").insert({
+    const { error } = await (supabase as any).from("merchant_staff").insert({
       merchant_id: merchant.id,
       email,
       display_name: displayName,
-      permissions: permissions as any,
+      permissions,
       status: "invited",
     });
     if (error) {
@@ -72,9 +72,9 @@ export const useStaffManagement = () => {
   };
 
   const updatePermissions = async (staffId: string, permissions: StaffPermissions) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("merchant_staff")
-      .update({ permissions: permissions as any })
+      .update({ permissions })
       .eq("id", staffId);
     if (error) { toast.error("Lỗi cập nhật quyền"); return false; }
     toast.success("Đã cập nhật quyền!");
@@ -83,7 +83,7 @@ export const useStaffManagement = () => {
   };
 
   const updateStatus = async (staffId: string, status: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("merchant_staff")
       .update({ status })
       .eq("id", staffId);
@@ -94,7 +94,7 @@ export const useStaffManagement = () => {
   };
 
   const removeStaff = async (staffId: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("merchant_staff")
       .delete()
       .eq("id", staffId);
