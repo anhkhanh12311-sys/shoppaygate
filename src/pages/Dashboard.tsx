@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, Webhook, User, Menu, X, Shield, Store,
+  Activity, Filter, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,17 +20,40 @@ import TransactionHistory from "@/components/dashboard/TransactionHistory";
 import WebhookSettings from "@/components/dashboard/WebhookSettings";
 import AccountSettings from "@/components/dashboard/AccountSettings";
 import StoreSettings from "@/components/dashboard/StoreSettings";
+import BalanceChanges from "@/components/dashboard/BalanceChanges";
+import SmartFilter from "@/components/dashboard/SmartFilter";
+import StaffManagement from "@/components/dashboard/StaffManagement";
 
-const navItems = [
-  { value: "overview", label: "Tổng quan", icon: LayoutDashboard },
-  { value: "store", label: "Cửa hàng", icon: Store },
-  { value: "account", label: "Tài khoản", icon: User },
-  { value: "settings", label: "Ngân hàng", icon: Settings },
-  { value: "create-link", label: "Tạo link", icon: Link2 },
-  { value: "qr-static", label: "QR tĩnh", icon: QrCode },
-  { value: "history", label: "Lịch sử", icon: History },
-  { value: "webhook", label: "Webhook", icon: Webhook },
+const navSections = [
+  {
+    label: "Chính",
+    items: [
+      { value: "overview", label: "Tổng quan", icon: LayoutDashboard },
+      { value: "balance", label: "Biến động số dư", icon: Activity },
+      { value: "history", label: "Lịch sử GD", icon: History },
+      { value: "smart-filter", label: "Lọc thông minh", icon: Filter },
+    ],
+  },
+  {
+    label: "Thanh toán",
+    items: [
+      { value: "create-link", label: "Tạo link", icon: Link2 },
+      { value: "qr-static", label: "QR tĩnh", icon: QrCode },
+    ],
+  },
+  {
+    label: "Quản lý",
+    items: [
+      { value: "store", label: "Cửa hàng", icon: Store },
+      { value: "staff", label: "Nhân viên", icon: Users },
+      { value: "settings", label: "Ngân hàng", icon: Settings },
+      { value: "account", label: "Tài khoản", icon: User },
+      { value: "webhook", label: "Webhook", icon: Webhook },
+    ],
+  },
 ];
+
+const allNavItems = navSections.flatMap(s => s.items);
 
 const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -40,13 +64,11 @@ const Dashboard = () => {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
-  // Close sidebar on desktop
   useEffect(() => {
     if (!isMobile) setSidebarOpen(false);
   }, [isMobile]);
@@ -77,17 +99,65 @@ const Dashboard = () => {
 
   if (!user || !merchant) return null;
 
-  // Keep all tabs mounted to preserve user data/state, show/hide with CSS
   const tabs = [
     { key: "overview", component: <DashboardOverview /> },
+    { key: "balance", component: <BalanceChanges /> },
+    { key: "history", component: <TransactionHistory /> },
+    { key: "smart-filter", component: <SmartFilter /> },
     { key: "store", component: <StoreSettings /> },
+    { key: "staff", component: <StaffManagement /> },
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
     { key: "create-link", component: <CreatePaymentLink /> },
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
-    { key: "history", component: <TransactionHistory /> },
     { key: "webhook", component: <WebhookSettings /> },
   ];
+
+  const renderSidebarNav = () => (
+    <>
+      {navSections.map((section) => (
+        <div key={section.label} className="mb-4">
+          <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            {section.label}
+          </p>
+          <div className="space-y-0.5">
+            {section.items.map((item) => (
+              <button
+                key={item.value}
+                onClick={() => handleNav(item.value)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+                  activeTab === item.value
+                    ? "gradient-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div className="pt-3 border-t space-y-0.5">
+        {isAdmin && (
+          <button
+            onClick={() => navigate("/admin")}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-primary hover:bg-primary/10 transition-colors"
+          >
+            <Shield className="h-4 w-4" />
+            <span>Quản trị viên</span>
+          </button>
+        )}
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Đăng xuất</span>
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -112,6 +182,12 @@ const Dashboard = () => {
               </span>
             </Link>
           </div>
+          {/* Mobile tab indicator */}
+          {isMobile && (
+            <span className="text-sm font-medium text-foreground">
+              {allNavItems.find(n => n.value === activeTab)?.label}
+            </span>
+          )}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="font-medium text-sm">{merchant.business_name}</p>
@@ -125,42 +201,10 @@ const Dashboard = () => {
       </header>
 
       <div className="flex">
-        {/* Sidebar - Desktop always visible, Mobile overlay */}
         {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-60 border-r bg-card min-h-[calc(100vh-57px)] sticky top-[57px]">
-          <nav className="p-4 space-y-1">
-            {navItems.map((item) => (
-              <button
-                key={item.value}
-                onClick={() => handleNav(item.value)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  activeTab === item.value
-                    ? "gradient-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </button>
-            ))}
-            <div className="pt-4 border-t mt-4 space-y-1">
-              {isAdmin && (
-                <button
-                  onClick={() => navigate("/admin")}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary hover:bg-primary/10 transition-colors"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span>Quản trị viên</span>
-                </button>
-              )}
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Đăng xuất</span>
-              </button>
-            </div>
+        <aside className="hidden lg:block w-60 border-r bg-card min-h-[calc(100vh-57px)] sticky top-[57px] overflow-y-auto">
+          <nav className="p-3">
+            {renderSidebarNav()}
           </nav>
         </aside>
 
@@ -180,51 +224,18 @@ const Dashboard = () => {
                   <p className="font-medium text-sm">{merchant.business_name}</p>
                   <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
-                <nav className="space-y-1">
-                  {navItems.map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() => handleNav(item.value)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                        activeTab === item.value
-                          ? "gradient-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
-                  <div className="pt-4 border-t mt-4 space-y-1">
-                    {isAdmin && (
-                      <button
-                        onClick={() => { navigate("/admin"); setSidebarOpen(false); }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary hover:bg-primary/10 transition-colors"
-                      >
-                        <Shield className="h-4 w-4" />
-                        <span>Quản trị viên</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Đăng xuất</span>
-                    </button>
-                  </div>
-                </nav>
+                {renderSidebarNav()}
               </div>
             </motion.aside>
           </>
         )}
 
-        {/* Main content - all tabs stay mounted to preserve data */}
+        {/* Main content */}
         <main className="flex-1 p-4 lg:p-8 min-w-0">
           {tabs.map((tab) => (
             <div
               key={tab.key}
-              className={activeTab === tab.key ? "block" : "hidden"}
+              className={activeTab === tab.key ? "block animate-fade-in" : "hidden"}
             >
               {tab.component}
             </div>
