@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, Webhook, User, Menu, X, Shield, Store,
@@ -87,11 +87,11 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="container py-8">
-          <Skeleton className="h-12 w-48 mb-8" />
-          <div className="grid gap-6 md:grid-cols-3 mb-8">
-            <Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" />
+          <Skeleton className="h-12 w-48 mb-8 rounded-xl" />
+          <div className="grid gap-4 md:grid-cols-4 mb-8">
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
           </div>
-          <Skeleton className="h-96" />
+          <Skeleton className="h-96 rounded-2xl" />
         </div>
       </div>
     );
@@ -114,35 +114,38 @@ const Dashboard = () => {
   ];
 
   const renderSidebarNav = () => (
-    <>
+    <div className="space-y-5">
       {navSections.map((section) => (
-        <div key={section.label} className="mb-4">
-          <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        <div key={section.label}>
+          <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
             {section.label}
           </p>
           <div className="space-y-0.5">
-            {section.items.map((item) => (
-              <button
-                key={item.value}
-                onClick={() => handleNav(item.value)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-                  activeTab === item.value
-                    ? "gradient-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </button>
-            ))}
+            {section.items.map((navItem) => {
+              const isActive = activeTab === navItem.value;
+              return (
+                <button
+                  key={navItem.value}
+                  onClick={() => handleNav(navItem.value)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? "gradient-primary text-primary-foreground shadow-md"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  }`}
+                >
+                  <navItem.icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{navItem.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       ))}
-      <div className="pt-3 border-t space-y-0.5">
+      <div className="pt-4 border-t space-y-0.5">
         {isAdmin && (
           <button
             onClick={() => navigate("/admin")}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-primary hover:bg-primary/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
           >
             <Shield className="h-4 w-4" />
             <span>Quản trị viên</span>
@@ -150,50 +153,49 @@ const Dashboard = () => {
         )}
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="h-4 w-4" />
           <span>Đăng xuất</span>
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b">
-        <div className="px-4 lg:px-8 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-50 glass border-b border-border/50">
+        <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden rounded-xl"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <Link to="/" className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center">
+              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary hidden sm:inline">
+              <span className="text-lg font-bold text-gradient-primary hidden sm:inline">
                 PayGate
               </span>
             </Link>
           </div>
-          {/* Mobile tab indicator */}
           {isMobile && (
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-sm font-semibold text-foreground">
               {allNavItems.find(n => n.value === activeTab)?.label}
             </span>
           )}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="font-medium text-sm">{merchant.business_name}</p>
+              <p className="font-semibold text-sm">{merchant.business_name}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} title="Đăng xuất">
+            <Button variant="ghost" size="icon" onClick={handleSignOut} title="Đăng xuất" className="rounded-xl">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
@@ -202,36 +204,44 @@ const Dashboard = () => {
 
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-60 border-r bg-card min-h-[calc(100vh-57px)] sticky top-[57px] overflow-y-auto">
-          <nav className="p-3">
+        <aside className="hidden lg:block w-60 border-r border-border/50 bg-card/50 min-h-[calc(100vh-57px)] sticky top-[57px] overflow-y-auto">
+          <nav className="p-3 pt-4">
             {renderSidebarNav()}
           </nav>
         </aside>
 
         {/* Mobile sidebar overlay */}
-        {isMobile && sidebarOpen && (
-          <>
-            <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setSidebarOpen(false)} />
-            <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ duration: 0.2 }}
-              className="fixed left-0 top-[57px] bottom-0 z-50 w-72 bg-card border-r shadow-xl overflow-y-auto"
-            >
-              <div className="p-4">
-                <div className="mb-4 px-3">
-                  <p className="font-medium text-sm">{merchant.business_name}</p>
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+        <AnimatePresence>
+          {isMobile && sidebarOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+                onClick={() => setSidebarOpen(false)}
+              />
+              <motion.aside
+                initial={{ x: -300 }}
+                animate={{ x: 0 }}
+                exit={{ x: -300 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed left-0 top-[57px] bottom-0 z-50 w-72 bg-card border-r shadow-2xl overflow-y-auto"
+              >
+                <div className="p-4">
+                  <div className="mb-5 px-3 py-3 rounded-xl bg-muted/50">
+                    <p className="font-semibold text-sm">{merchant.business_name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  {renderSidebarNav()}
                 </div>
-                {renderSidebarNav()}
-              </div>
-            </motion.aside>
-          </>
-        )}
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Main content */}
-        <main className="flex-1 p-4 lg:p-8 min-w-0">
+        <main className="flex-1 p-4 lg:p-6 xl:p-8 min-w-0">
           {tabs.map((tab) => (
             <div
               key={tab.key}
