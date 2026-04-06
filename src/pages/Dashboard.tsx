@@ -55,6 +55,8 @@ const navSections = [
 
 const allNavItems = navSections.flatMap(s => s.items);
 
+const LG_BREAKPOINT = 1024;
+
 const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { merchant, loading: merchantLoading } = useMerchant();
@@ -65,13 +67,31 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Track if below lg breakpoint for sidebar visibility
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  useEffect(() => {
+    const check = () => setIsSmallScreen(window.innerWidth < LG_BREAKPOINT);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (!isMobile) setSidebarOpen(false);
-  }, [isMobile]);
+    if (!isSmallScreen) setSidebarOpen(false);
+  }, [isSmallScreen]);
+
+  // Prevent page reload when returning from background
+  useEffect(() => {
+    const handleVisibility = () => {
+      // do nothing - prevent default reload behavior
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -80,7 +100,7 @@ const Dashboard = () => {
 
   const handleNav = (value: string) => {
     setActiveTab(value);
-    if (isMobile) setSidebarOpen(false);
+    if (isSmallScreen) setSidebarOpen(false);
   };
 
   if (authLoading || merchantLoading) {
@@ -168,14 +188,16 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden rounded-xl"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            {isSmallScreen && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-xl"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            )}
             <Link to="/" className="flex items-center gap-2">
               <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
@@ -185,7 +207,7 @@ const Dashboard = () => {
               </span>
             </Link>
           </div>
-          {isMobile && (
+          {isSmallScreen && (
             <span className="text-sm font-semibold text-foreground">
               {allNavItems.find(n => n.value === activeTab)?.label}
             </span>
@@ -212,7 +234,7 @@ const Dashboard = () => {
 
         {/* Mobile sidebar overlay */}
         <AnimatePresence>
-          {isMobile && sidebarOpen && (
+          {isSmallScreen && sidebarOpen && (
             <>
               <motion.div
                 initial={{ opacity: 0 }}

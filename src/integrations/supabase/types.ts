@@ -55,6 +55,56 @@ export type Database = {
           },
         ]
       }
+      merchant_staff: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          invited_at: string
+          joined_at: string | null
+          merchant_id: string
+          permissions: Json
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          email: string
+          id?: string
+          invited_at?: string
+          joined_at?: string | null
+          merchant_id: string
+          permissions?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          invited_at?: string
+          joined_at?: string | null
+          merchant_id?: string
+          permissions?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_staff_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_stores: {
         Row: {
           banner_url: string | null
