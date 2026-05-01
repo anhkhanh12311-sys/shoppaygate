@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, Webhook, User, Menu, X, Shield, Store,
-  Activity, Filter, Users, Volume2,
+  Activity, Filter, Users, Volume2, Brain, Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +24,8 @@ import BalanceChanges from "@/components/dashboard/BalanceChanges";
 import SmartFilter from "@/components/dashboard/SmartFilter";
 import StaffManagement from "@/components/dashboard/StaffManagement";
 import VoiceAnnouncerSettings from "@/components/dashboard/VoiceAnnouncerSettings";
+import SepaySync from "@/components/dashboard/SepaySync";
+import AIInsights from "@/components/dashboard/AIInsights";
 
 const navSections = [
   {
