@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, Webhook, User, Menu, X, Shield, Store,
-  Activity, Filter, Users,
+  Activity, Filter, Users, Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,7 @@ import StoreSettings from "@/components/dashboard/StoreSettings";
 import BalanceChanges from "@/components/dashboard/BalanceChanges";
 import SmartFilter from "@/components/dashboard/SmartFilter";
 import StaffManagement from "@/components/dashboard/StaffManagement";
+import VoiceAnnouncerSettings from "@/components/dashboard/VoiceAnnouncerSettings";
 
 const navSections = [
   {
@@ -46,6 +47,7 @@ const navSections = [
     items: [
       { value: "store", label: "Cửa hàng", icon: Store },
       { value: "staff", label: "Nhân viên", icon: Users },
+      { value: "voice", label: "Loa thanh toán", icon: Volume2 },
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "account", label: "Tài khoản", icon: User },
       { value: "webhook", label: "Webhook", icon: Webhook },
@@ -126,6 +128,7 @@ const Dashboard = () => {
     { key: "smart-filter", component: <SmartFilter /> },
     { key: "store", component: <StoreSettings /> },
     { key: "staff", component: <StaffManagement /> },
+    { key: "voice", component: <VoiceAnnouncerSettings /> },
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
     { key: "create-link", component: <CreatePaymentLink /> },
