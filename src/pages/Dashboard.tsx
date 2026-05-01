@@ -32,9 +32,11 @@ const navSections = [
     label: "Chính",
     items: [
       { value: "overview", label: "Tổng quan", icon: LayoutDashboard },
+      { value: "ai-insights", label: "AI Insights", icon: Brain },
       { value: "balance", label: "Biến động số dư", icon: Activity },
       { value: "history", label: "Lịch sử GD", icon: History },
       { value: "smart-filter", label: "Lọc thông minh", icon: Filter },
+      { value: "sepay-sync", label: "Đồng bộ SePay", icon: Database },
     ],
   },
   {
