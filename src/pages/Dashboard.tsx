@@ -127,9 +127,11 @@ const Dashboard = () => {
 
   const tabs = [
     { key: "overview", component: <DashboardOverview /> },
+    { key: "ai-insights", component: <AIInsights /> },
     { key: "balance", component: <BalanceChanges /> },
     { key: "history", component: <TransactionHistory /> },
     { key: "smart-filter", component: <SmartFilter /> },
+    { key: "sepay-sync", component: <SepaySync /> },
     { key: "store", component: <StoreSettings /> },
     { key: "staff", component: <StaffManagement /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },
