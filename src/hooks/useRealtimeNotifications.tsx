@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMerchant } from "./useMerchant";
 import { useToast } from "./use-toast";
+import { speakAmount, primeVoices } from "@/lib/paymentVoice";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
@@ -16,6 +17,7 @@ export const useRealtimeNotifications = () => {
   const notifiedRef = useRef(new Set<string>());
 
   useEffect(() => {
+    primeVoices();
     if (!merchant) return;
 
     const channel = supabase
@@ -32,6 +34,7 @@ export const useRealtimeNotifications = () => {
           const tx = payload.new as any;
           if (tx.status === "completed" && !notifiedRef.current.has(tx.id)) {
             notifiedRef.current.add(tx.id);
+            speakAmount(Number(tx.amount));
             toast({
               title: "💰 Giao dịch mới thành công!",
               description: `Đã nhận ${formatCurrency(tx.amount)}`,
@@ -51,6 +54,7 @@ export const useRealtimeNotifications = () => {
           const tx = payload.new as any;
           if (tx.status === "completed" && !notifiedRef.current.has(tx.id)) {
             notifiedRef.current.add(tx.id);
+            speakAmount(Number(tx.amount));
             toast({
               title: "💰 Giao dịch thành công!",
               description: `Đã nhận ${formatCurrency(tx.amount)}`,

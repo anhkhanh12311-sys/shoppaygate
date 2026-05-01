@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,9 +58,36 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
   const { defaultBank } = useMerchantBanks();
   const { createPaymentLink } = usePaymentLinks();
   const [isLoading, setIsLoading] = useState(false);
+  const storageKey = `paygate.lastLink.${isStatic ? "qr" : "link"}.${merchant?.id || "anon"}`;
   const [createdLink, setCreatedLink] = useState<{ url: string; code: string; amount: number } | null>(null);
   const [activeTab, setActiveTab] = useState("create");
   const { toast } = useToast();
+
+  // Restore last created link from localStorage on mount / merchant change
+  useEffect(() => {
+    if (!merchant) return;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved?.code && saved?.url && saved?.amount) {
+          setCreatedLink(saved);
+        }
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchant?.id, isStatic]);
+
+  // Persist whenever createdLink changes
+  useEffect(() => {
+    if (!merchant) return;
+    if (createdLink) {
+      localStorage.setItem(storageKey, JSON.stringify(createdLink));
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createdLink, merchant?.id, isStatic]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
