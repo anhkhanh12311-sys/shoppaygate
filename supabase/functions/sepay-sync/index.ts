@@ -52,7 +52,15 @@ Deno.serve(async (req) => {
       .eq("auth_user_id", userData.user.id)
       .maybeSingle();
     if (mErr || !merchant) return json({ success: false, error: "Merchant not found" }, 404);
-    if (!merchant.sepay_api_key) {
+
+    // Fetch SePay API key from merchant_secrets
+    const { data: secretRow } = await supabase
+      .from("merchant_secrets")
+      .select("sepay_api_key")
+      .eq("merchant_id", merchant.id)
+      .maybeSingle();
+    const sepayApiKey = secretRow?.sepay_api_key;
+    if (!sepayApiKey) {
       return json({ success: false, error: "SePay API key chưa được cấu hình" }, 400);
     }
 
@@ -76,7 +84,7 @@ Deno.serve(async (req) => {
 
     const resp = await fetch(url.toString(), {
       headers: {
-        Authorization: `Bearer ${merchant.sepay_api_key}`,
+        Authorization: `Bearer ${sepayApiKey}`,
         "Content-Type": "application/json",
       },
     });

@@ -233,8 +233,13 @@ Deno.serve(async (req) => {
       };
 
       let signature = "";
-      if (merchant.webhook_secret) {
-        signature = createHmac("sha256", merchant.webhook_secret)
+      const { data: secretRow } = await supabase
+        .from("merchant_secrets")
+        .select("webhook_secret")
+        .eq("merchant_id", merchant.id)
+        .maybeSingle();
+      if (secretRow?.webhook_secret) {
+        signature = createHmac("sha256", secretRow.webhook_secret)
           .update(JSON.stringify(webhookPayload))
           .digest("hex");
       }
