@@ -71,10 +71,6 @@ Deno.serve(async (req) => {
         return jsonResponse({ success: false, error: "Merchant not found" }, 404);
       }
       merchant = data;
-        console.error("Invalid webhook API key");
-        return jsonResponse({ success: false, error: "Invalid API key" }, 401);
-      }
-      merchant = data;
       console.log("Merchant identified via API key:", merchant.id);
     } else if (queryMerchantId) {
       const { data, error } = await supabase
