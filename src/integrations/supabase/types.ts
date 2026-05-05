@@ -55,6 +55,38 @@ export type Database = {
           },
         ]
       }
+      merchant_secrets: {
+        Row: {
+          merchant_id: string
+          sepay_api_key: string | null
+          updated_at: string
+          webhook_api_key: string | null
+          webhook_secret: string | null
+        }
+        Insert: {
+          merchant_id: string
+          sepay_api_key?: string | null
+          updated_at?: string
+          webhook_api_key?: string | null
+          webhook_secret?: string | null
+        }
+        Update: {
+          merchant_id?: string
+          sepay_api_key?: string | null
+          updated_at?: string
+          webhook_api_key?: string | null
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_secrets_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_staff: {
         Row: {
           created_at: string
@@ -172,11 +204,8 @@ export type Database = {
           email: string
           id: string
           phone: string | null
-          sepay_api_key: string | null
           updated_at: string
-          webhook_api_key: string | null
           webhook_enabled: boolean | null
-          webhook_secret: string | null
           webhook_url: string | null
         }
         Insert: {
@@ -189,11 +218,8 @@ export type Database = {
           email: string
           id?: string
           phone?: string | null
-          sepay_api_key?: string | null
           updated_at?: string
-          webhook_api_key?: string | null
           webhook_enabled?: boolean | null
-          webhook_secret?: string | null
           webhook_url?: string | null
         }
         Update: {
@@ -206,11 +232,8 @@ export type Database = {
           email?: string
           id?: string
           phone?: string | null
-          sepay_api_key?: string | null
           updated_at?: string
-          webhook_api_key?: string | null
           webhook_enabled?: boolean | null
-          webhook_secret?: string | null
           webhook_url?: string | null
         }
         Relationships: []
@@ -358,6 +381,14 @@ export type Database = {
         }[]
       }
       get_merchant_id_for_auth_user: { Args: never; Returns: string }
+      get_my_merchant_secrets: {
+        Args: never
+        Returns: {
+          sepay_api_key: string
+          webhook_api_key: string
+          webhook_secret: string
+        }[]
+      }
       get_top_merchants: {
         Args: { p_limit?: number }
         Returns: {
@@ -388,6 +419,17 @@ export type Database = {
         Returns: string
       }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
+      update_my_merchant_secrets: {
+        Args: {
+          p_clear_sepay?: boolean
+          p_clear_webhook_api_key?: boolean
+          p_clear_webhook_secret?: boolean
+          p_sepay_api_key?: string
+          p_webhook_api_key?: string
+          p_webhook_secret?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
