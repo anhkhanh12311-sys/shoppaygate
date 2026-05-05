@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useMerchant } from "@/hooks/useMerchant";
+import { useMerchantSecrets } from "@/hooks/useMerchantSecrets";
 
 const schema = z.object({
   webhook_url: z.string().url("URL không hợp lệ").or(z.literal("")),
@@ -41,6 +42,7 @@ const generateSecret = () => {
 
 const WebhookSettings = () => {
   const { merchant, updateMerchant, loading: merchantLoading } = useMerchant();
+  const { secrets, updateSecrets } = useMerchantSecrets();
   const [isLoading, setIsLoading] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -64,7 +66,7 @@ const WebhookSettings = () => {
     return `https://${projectId}.supabase.co/functions/v1/sepay-webhook`;
   }, [merchant]);
 
-  const webhookApiKey = (merchant as any)?.webhook_api_key || "";
+  const webhookApiKey = secrets.webhook_api_key || "";
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
@@ -82,7 +84,7 @@ const WebhookSettings = () => {
   const generateNewApiKey = async () => {
     const newKey = generateApiKey();
     setIsLoading(true);
-    const { error } = await updateMerchant({ webhook_api_key: newKey } as any);
+    const { error } = await updateSecrets({ webhook_api_key: newKey });
     setIsLoading(false);
     toast(error
       ? { variant: "destructive", title: "Lỗi", description: "Không thể tạo API key mới" }
@@ -93,7 +95,7 @@ const WebhookSettings = () => {
   const regenerateSecret = async () => {
     const newSecret = generateSecret();
     setIsLoading(true);
-    const { error } = await updateMerchant({ webhook_secret: newSecret });
+    const { error } = await updateSecrets({ webhook_secret: newSecret });
     setIsLoading(false);
     toast(error
       ? { variant: "destructive", title: "Lỗi", description: "Không thể tạo secret mới" }
@@ -422,7 +424,7 @@ const WebhookSettings = () => {
                   <div className="flex-1 relative">
                     <Input
                       type={showSecret ? "text" : "password"}
-                      value={merchant?.webhook_secret || "Chưa tạo"}
+                      value={secrets.webhook_secret || "Chưa tạo"}
                       readOnly
                       className="pr-10 font-mono text-sm"
                     />
@@ -430,7 +432,7 @@ const WebhookSettings = () => {
                       {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
-                  <Button type="button" variant="outline" size="icon" onClick={() => merchant?.webhook_secret && copyToClipboard(merchant.webhook_secret, "Secret")} disabled={!merchant?.webhook_secret}>
+                  <Button type="button" variant="outline" size="icon" onClick={() => secrets.webhook_secret && copyToClipboard(secrets.webhook_secret, "Secret")} disabled={!secrets.webhook_secret}>
                     {copied === "Secret" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                   <Button type="button" variant="outline" size="icon" onClick={regenerateSecret} disabled={isLoading}>
