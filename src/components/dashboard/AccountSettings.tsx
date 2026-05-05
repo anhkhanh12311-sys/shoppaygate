@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useMerchant } from "@/hooks/useMerchant";
+import { useMerchantSecrets } from "@/hooks/useMerchantSecrets";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -54,6 +55,7 @@ const item = {
 const AccountSettings = () => {
   const { user } = useAuth();
   const { merchant, updateMerchant } = useMerchant();
+  const { secrets, updateSecrets } = useMerchantSecrets();
   const { toast } = useToast();
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingApiKey, setSavingApiKey] = useState(false);
@@ -89,9 +91,12 @@ const AccountSettings = () => {
         phone: merchant.phone || "",
         email: merchant.email || "",
       });
-      apiKeyForm.reset({ sepay_api_key: merchant.sepay_api_key || "" });
     }
   }, [merchant]);
+
+  useEffect(() => {
+    apiKeyForm.reset({ sepay_api_key: secrets.sepay_api_key || "" });
+  }, [secrets.sepay_api_key]);
 
   const onSaveProfile = async (data: ProfileData) => {
     setSavingProfile(true);
@@ -111,7 +116,7 @@ const AccountSettings = () => {
 
   const onSaveApiKey = async (data: ApiKeyData) => {
     setSavingApiKey(true);
-    const { error } = await updateMerchant({ sepay_api_key: data.sepay_api_key || null });
+    const { error } = await updateSecrets({ sepay_api_key: data.sepay_api_key || null });
     setSavingApiKey(false);
     toast(error
       ? { variant: "destructive", title: "Lỗi", description: "Không thể lưu API Key." }
@@ -143,7 +148,7 @@ const AccountSettings = () => {
     }
   };
 
-  const apiKeyStatus = merchant?.sepay_api_key ? "configured" : "missing";
+  const apiKeyStatus = secrets.sepay_api_key ? "configured" : "missing";
 
   return (
     <div className="space-y-6 max-w-3xl">
