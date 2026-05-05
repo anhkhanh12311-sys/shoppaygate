@@ -92,13 +92,12 @@ export const usePaymentLinks = () => {
   return { paymentLinks, loading, error, createPaymentLink, deletePaymentLink, refetch: fetchPaymentLinks };
 };
 
-// Generate a short unique code
-const generateCode = (isStatic: boolean): string => {
-  const prefix = "PG-";
+// Generate a cryptographically secure unique code (12 chars)
+const generateCode = (_isStatic: boolean): string => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = prefix;
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  const array = new Uint8Array(12);
+  crypto.getRandomValues(array);
+  let code = "PG-";
+  for (let i = 0; i < 12; i++) code += chars[array[i] % chars.length];
   return code;
 };

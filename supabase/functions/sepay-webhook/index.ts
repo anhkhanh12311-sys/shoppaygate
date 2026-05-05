@@ -52,15 +52,23 @@ Deno.serve(async (req) => {
     let merchant: any = null;
 
     if (webhookApiKey) {
-      // Lookup merchant by webhook_api_key
+      // Lookup merchant via merchant_secrets (secret table)
+      const { data: secretRow } = await supabase
+        .from("merchant_secrets")
+        .select("merchant_id")
+        .eq("webhook_api_key", webhookApiKey)
+        .maybeSingle();
+      if (!secretRow) {
+        console.error("Invalid webhook API key");
+        return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+      }
       const { data, error } = await supabase
         .from("merchants")
         .select("*")
-        .eq("webhook_api_key", webhookApiKey)
+        .eq("id", secretRow.merchant_id)
         .maybeSingle();
       if (error || !data) {
-        console.error("Invalid webhook API key");
-        return jsonResponse({ success: false, error: "Invalid API key" }, 401);
+        return jsonResponse({ success: false, error: "Merchant not found" }, 404);
       }
       merchant = data;
       console.log("Merchant identified via API key:", merchant.id);
@@ -82,9 +90,16 @@ Deno.serve(async (req) => {
     const payload: SepayWebhookPayload = await req.json();
     console.log("Webhook payload:", JSON.stringify(payload));
 
-    // Validate required fields
-    if (!payload.content || !payload.transferAmount || !payload.accountNumber) {
-      return jsonResponse({ success: false, error: "Missing required fields" }, 400);
+    // Validate required fields with proper bounds
+    if (
+      !payload.content ||
+      typeof payload.transferAmount !== "number" ||
+      payload.transferAmount <= 0 ||
+      payload.transferAmount > 10_000_000_000 ||
+      !payload.accountNumber ||
+      payload.content.length > 1000
+    ) {
+      return jsonResponse({ success: false, error: "Invalid payload" }, 400);
     }
 
     // Only process incoming transfers
@@ -214,8 +229,13 @@ Deno.serve(async (req) => {
       };
 
       let signature = "";
-      if (merchant.webhook_secret) {
-        signature = createHmac("sha256", merchant.webhook_secret)
+      const { data: secretRow } = await supabase
+        .from("merchant_secrets")
+        .select("webhook_secret")
+        .eq("merchant_id", merchant.id)
+        .maybeSingle();
+      if (secretRow?.webhook_secret) {
+        signature = createHmac("sha256", secretRow.webhook_secret)
           .update(JSON.stringify(webhookPayload))
           .digest("hex");
       }

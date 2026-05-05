@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useMerchant } from "@/hooks/useMerchant";
+import { useMerchantSecrets } from "@/hooks/useMerchantSecrets";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +27,7 @@ interface SyncResult {
 
 const SepaySync = () => {
   const { merchant } = useMerchant();
+  const { secrets } = useMerchantSecrets();
   const { toast } = useToast();
   const [sinceHours, setSinceHours] = useState("24");
   const [limit, setLimit] = useState("50");
@@ -33,7 +35,7 @@ const SepaySync = () => {
   const [result, setResult] = useState<SyncResult | null>(null);
   const [lastRun, setLastRun] = useState<Date | null>(null);
 
-  const hasApiKey = !!merchant?.sepay_api_key;
+  const hasApiKey = !!secrets.sepay_api_key;
 
   const runSync = async () => {
     if (!hasApiKey) {

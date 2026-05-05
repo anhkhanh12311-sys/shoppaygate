@@ -55,17 +55,22 @@
        // No body provided, check all merchants
      }
  
-     // Get merchants with SePay API key configured
-     let merchantsQuery = supabase
-       .from("merchants")
-       .select("id, sepay_api_key, bank_account_number")
-       .not("sepay_api_key", "is", null);
- 
-     if (merchantId) {
-       merchantsQuery = merchantsQuery.eq("id", merchantId);
-     }
- 
-     const { data: merchants, error: merchantsError } = await merchantsQuery;
+      // Get merchants with SePay API key configured (from merchant_secrets)
+      let merchantsQuery = supabase
+        .from("merchant_secrets")
+        .select("merchant_id, sepay_api_key, merchants!inner(id, bank_account_number)")
+        .not("sepay_api_key", "is", null);
+
+      if (merchantId) {
+        merchantsQuery = merchantsQuery.eq("merchant_id", merchantId);
+      }
+
+      const { data: secretRows, error: merchantsError } = await merchantsQuery;
+      const merchants = (secretRows || []).map((r: any) => ({
+        id: r.merchant_id,
+        sepay_api_key: r.sepay_api_key,
+        bank_account_number: r.merchants?.bank_account_number,
+      }));
  
      if (merchantsError) {
        console.error("Error fetching merchants:", merchantsError);

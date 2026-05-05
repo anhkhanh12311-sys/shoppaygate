@@ -11,11 +11,8 @@ export interface Merchant {
   bank_name: string | null;
   bank_account_number: string | null;
   bank_account_name: string | null;
-  sepay_api_key: string | null;
-  webhook_secret: string | null;
   webhook_url: string | null;
   webhook_enabled: boolean | null;
-  webhook_api_key: string | null;
   created_at: string;
   updated_at: string;
 }
