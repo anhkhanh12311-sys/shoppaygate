@@ -94,9 +94,16 @@ Deno.serve(async (req) => {
     const payload: SepayWebhookPayload = await req.json();
     console.log("Webhook payload:", JSON.stringify(payload));
 
-    // Validate required fields
-    if (!payload.content || !payload.transferAmount || !payload.accountNumber) {
-      return jsonResponse({ success: false, error: "Missing required fields" }, 400);
+    // Validate required fields with proper bounds
+    if (
+      !payload.content ||
+      typeof payload.transferAmount !== "number" ||
+      payload.transferAmount <= 0 ||
+      payload.transferAmount > 10_000_000_000 ||
+      !payload.accountNumber ||
+      payload.content.length > 1000
+    ) {
+      return jsonResponse({ success: false, error: "Invalid payload" }, 400);
     }
 
     // Only process incoming transfers
