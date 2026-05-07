@@ -228,6 +228,81 @@ const StoreSettings = () => {
           </motion.div>
         </TabsContent>
 
+        {/* Tab: Contact */}
+        <TabsContent value="contact" className="mt-6 space-y-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-primary" /> Thông tin liên hệ
+                </CardTitle>
+                <CardDescription>Hiển thị công khai trên trang cửa hàng</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> Số điện thoại</Label>
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0123 456 789" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email</Label>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="shop@example.com" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> Địa chỉ</Label>
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Nguyễn Trãi, Q1, TP.HCM" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> Giờ làm việc</Label>
+                  <Input value={businessHours} onChange={(e) => setBusinessHours(e.target.value)} placeholder="T2-CN: 8:00 - 22:00" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* Tab: Social */}
+        <TabsContent value="social" className="mt-6 space-y-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Share2 className="h-5 w-5 text-primary" /> Mạng xã hội & Website
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Globe className="h-3.5 w-3.5" /> Website</Label>
+                  <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://..." />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Facebook className="h-3.5 w-3.5" /> Facebook</Label>
+                    <Input value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} placeholder="https://facebook.com/..." />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Instagram className="h-3.5 w-3.5" /> Instagram</Label>
+                    <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/..." />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5" /> Zalo</Label>
+                    <Input value={zaloUrl} onChange={(e) => setZaloUrl(e.target.value)} placeholder="https://zalo.me/..." />
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Hiển thị thống kê công khai</Label>
+                    <p className="text-xs text-muted-foreground">Số lượng link, doanh thu tổng (ẩn nếu tắt)</p>
+                  </div>
+                  <Switch checked={showStats} onCheckedChange={setShowStats} />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
         {/* Tab: Branding */}
         <TabsContent value="branding" className="mt-6 space-y-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
