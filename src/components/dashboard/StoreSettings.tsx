@@ -35,6 +35,16 @@ const StoreSettings = () => {
   const [secondaryColor, setSecondaryColor] = useState("#e91e8c");
   const [footerText, setFooterText] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [businessHours, setBusinessHours] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [zaloUrl, setZaloUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [showStats, setShowStats] = useState(true);
+  const [themeStyle, setThemeStyle] = useState("modern");
 
   useEffect(() => {
     if (store) {
@@ -47,6 +57,16 @@ const StoreSettings = () => {
       setSecondaryColor(store.secondary_color || "#e91e8c");
       setFooterText(store.footer_text || "");
       setIsActive(store.is_active);
+      setPhone(store.phone || "");
+      setEmail(store.email || "");
+      setAddress(store.address || "");
+      setBusinessHours(store.business_hours || "");
+      setFacebookUrl(store.facebook_url || "");
+      setInstagramUrl(store.instagram_url || "");
+      setZaloUrl(store.zalo_url || "");
+      setWebsiteUrl(store.website_url || "");
+      setShowStats(store.show_stats ?? true);
+      setThemeStyle(store.theme_style || "modern");
     } else if (merchant) {
       setStoreName(merchant.business_name);
       setSlug(merchant.business_name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""));
