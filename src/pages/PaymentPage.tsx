@@ -198,29 +198,44 @@ const PaymentPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [paymentInfo, paymentStatus]);
 
-  // Smart auto-check: faster at start, slower over time
+  // Ultra-fast auto-check: aggressive polling + active SePay pull
   useEffect(() => {
     if (!paymentInfo || paymentStatus === "completed") return;
-    const intervals = [5000, 5000, 8000, 8000, 10000, 15000, 20000, 30000]; // escalating
+    // Aggressive at start (giây đầu), giãn dần để giữ tải hợp lý
+    const intervals = [2000, 2000, 3000, 3000, 4000, 5000, 7000, 10000, 15000, 20000];
     let timeoutId: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+    let count = 0;
 
     const check = async () => {
+      if (cancelled) return;
       setIsChecking(true);
       try {
+        // 1) Check DB status (webhook có thể đã ghi)
         const { data } = await supabase
-          .from("payment_links").select("status").eq("id", paymentInfo.id).single();
+          .from("payment_links").select("status").eq("id", paymentInfo.id).maybeSingle();
         if (data?.status === "completed") { markCompleted(); return; }
+
+        // 2) Mỗi 2 lần, chủ động pull SePay API qua edge function
+        if (count % 2 === 0) {
+          supabase.functions.invoke("check-pending-transactions", {
+            body: { merchant_id: paymentInfo.merchant_id, payment_link_id: paymentInfo.id },
+          }).catch(() => {});
+        }
         setLastChecked(new Date());
-        setCheckCount(c => c + 1);
+        count++;
+        setCheckCount(count);
       } catch {}
       setIsChecking(false);
-      const delay = intervals[Math.min(checkCount, intervals.length - 1)];
+      if (cancelled) return;
+      const delay = intervals[Math.min(count, intervals.length - 1)];
       timeoutId = setTimeout(check, delay);
     };
 
-    timeoutId = setTimeout(check, 3000); // first check after 3s
-    return () => clearTimeout(timeoutId);
-  }, [paymentInfo, paymentStatus, checkCount]);
+    // Lần check đầu tiên ngay sau 1s — người dùng gần như không phải chờ
+    timeoutId = setTimeout(check, 1000);
+    return () => { cancelled = true; clearTimeout(timeoutId); };
+  }, [paymentInfo, paymentStatus]);
 
   const manualCheck = async () => {
     if (!paymentInfo || isChecking) return;
