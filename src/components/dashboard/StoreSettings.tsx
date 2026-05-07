@@ -309,6 +309,39 @@ const StoreSettings = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-primary" /> Phong cách
+                </CardTitle>
+                <CardDescription>Chọn theme cho trang công khai</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: "modern", name: "Modern", desc: "Tối giản" },
+                    { id: "vibrant", name: "Vibrant", desc: "Gradient nổi" },
+                    { id: "classic", name: "Classic", desc: "Cổ điển" },
+                    { id: "dark", name: "Dark", desc: "Nền tối" },
+                  ].map((t) => (
+                    <button key={t.id} type="button" onClick={() => setThemeStyle(t.id)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${themeStyle === t.id ? "border-primary shadow-md" : "border-muted hover:border-primary/50"}`}>
+                      <div className="h-10 rounded mb-2" style={{
+                        background: t.id === "dark" ? "linear-gradient(135deg, #1f2937, #111827)"
+                          : t.id === "classic" ? "linear-gradient(135deg, #92400e, #d97706)"
+                          : t.id === "vibrant" ? `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
+                          : `linear-gradient(135deg, ${primaryColor}aa, ${secondaryColor}aa)`,
+                      }} />
+                      <p className="font-semibold text-sm">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
                   <Palette className="h-5 w-5 text-primary" /> Màu sắc
                 </CardTitle>
               </CardHeader>
