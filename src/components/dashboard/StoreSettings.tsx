@@ -94,6 +94,16 @@ const StoreSettings = () => {
       secondary_color: secondaryColor,
       footer_text: footerText || null,
       is_active: isActive,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      business_hours: businessHours || null,
+      facebook_url: facebookUrl || null,
+      instagram_url: instagramUrl || null,
+      zalo_url: zaloUrl || null,
+      website_url: websiteUrl || null,
+      show_stats: showStats,
+      theme_style: themeStyle,
     });
 
     if (error) {
