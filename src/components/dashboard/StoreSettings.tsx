@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Store, Eye, ExternalLink, Copy, Check, Palette, Type, Image,
   FileText, Globe, Phone, Mail, MapPin, Clock, Share2, Smartphone,
-  Monitor, Sparkles,
+  Monitor, Sparkles, Facebook, Instagram, MessageCircle, Layers,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
