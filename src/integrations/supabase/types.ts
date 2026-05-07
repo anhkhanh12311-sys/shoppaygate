@@ -139,49 +139,79 @@ export type Database = {
       }
       merchant_stores: {
         Row: {
+          address: string | null
           banner_url: string | null
+          business_hours: string | null
           created_at: string
           description: string | null
+          email: string | null
+          facebook_url: string | null
           footer_text: string | null
           id: string
+          instagram_url: string | null
           is_active: boolean
           logo_url: string | null
           merchant_id: string
+          phone: string | null
           primary_color: string | null
           secondary_color: string | null
+          show_stats: boolean
           slug: string
           store_name: string
+          theme_style: string
           updated_at: string
+          website_url: string | null
+          zalo_url: string | null
         }
         Insert: {
+          address?: string | null
           banner_url?: string | null
+          business_hours?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
+          facebook_url?: string | null
           footer_text?: string | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean
           logo_url?: string | null
           merchant_id: string
+          phone?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          show_stats?: boolean
           slug: string
           store_name: string
+          theme_style?: string
           updated_at?: string
+          website_url?: string | null
+          zalo_url?: string | null
         }
         Update: {
+          address?: string | null
           banner_url?: string | null
+          business_hours?: string | null
           created_at?: string
           description?: string | null
+          email?: string | null
+          facebook_url?: string | null
           footer_text?: string | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean
           logo_url?: string | null
           merchant_id?: string
+          phone?: string | null
           primary_color?: string | null
           secondary_color?: string | null
+          show_stats?: boolean
           slug?: string
           store_name?: string
+          theme_style?: string
           updated_at?: string
+          website_url?: string | null
+          zalo_url?: string | null
         }
         Relationships: [
           {
