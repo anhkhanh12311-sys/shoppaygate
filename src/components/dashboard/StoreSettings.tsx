@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Store, Eye, ExternalLink, Copy, Check, Palette, Type, Image,
   FileText, Globe, Phone, Mail, MapPin, Clock, Share2, Smartphone,
-  Monitor, Sparkles,
+  Monitor, Sparkles, Facebook, Instagram, MessageCircle, Layers,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,16 @@ const StoreSettings = () => {
   const [secondaryColor, setSecondaryColor] = useState("#e91e8c");
   const [footerText, setFooterText] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [businessHours, setBusinessHours] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [zaloUrl, setZaloUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [showStats, setShowStats] = useState(true);
+  const [themeStyle, setThemeStyle] = useState("modern");
 
   useEffect(() => {
     if (store) {
@@ -47,6 +57,16 @@ const StoreSettings = () => {
       setSecondaryColor(store.secondary_color || "#e91e8c");
       setFooterText(store.footer_text || "");
       setIsActive(store.is_active);
+      setPhone(store.phone || "");
+      setEmail(store.email || "");
+      setAddress(store.address || "");
+      setBusinessHours(store.business_hours || "");
+      setFacebookUrl(store.facebook_url || "");
+      setInstagramUrl(store.instagram_url || "");
+      setZaloUrl(store.zalo_url || "");
+      setWebsiteUrl(store.website_url || "");
+      setShowStats(store.show_stats ?? true);
+      setThemeStyle(store.theme_style || "modern");
     } else if (merchant) {
       setStoreName(merchant.business_name);
       setSlug(merchant.business_name.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""));
@@ -74,6 +94,16 @@ const StoreSettings = () => {
       secondary_color: secondaryColor,
       footer_text: footerText || null,
       is_active: isActive,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      business_hours: businessHours || null,
+      facebook_url: facebookUrl || null,
+      instagram_url: instagramUrl || null,
+      zalo_url: zaloUrl || null,
+      website_url: websiteUrl || null,
+      show_stats: showStats,
+      theme_style: themeStyle,
     });
 
     if (error) {
@@ -156,8 +186,10 @@ const StoreSettings = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="info">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="info" className="gap-2"><Type className="h-4 w-4" /> Thông tin</TabsTrigger>
+          <TabsTrigger value="contact" className="gap-2"><Phone className="h-4 w-4" /> Liên hệ</TabsTrigger>
+          <TabsTrigger value="social" className="gap-2"><Share2 className="h-4 w-4" /> Mạng XH</TabsTrigger>
           <TabsTrigger value="branding" className="gap-2"><Palette className="h-4 w-4" /> Thương hiệu</TabsTrigger>
           <TabsTrigger value="preview" className="gap-2"><Eye className="h-4 w-4" /> Xem trước</TabsTrigger>
         </TabsList>
@@ -196,8 +228,116 @@ const StoreSettings = () => {
           </motion.div>
         </TabsContent>
 
+        {/* Tab: Contact */}
+        <TabsContent value="contact" className="mt-6 space-y-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-primary" /> Thông tin liên hệ
+                </CardTitle>
+                <CardDescription>Hiển thị công khai trên trang cửa hàng</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" /> Số điện thoại</Label>
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0123 456 789" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email</Label>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="shop@example.com" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> Địa chỉ</Label>
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Nguyễn Trãi, Q1, TP.HCM" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> Giờ làm việc</Label>
+                  <Input value={businessHours} onChange={(e) => setBusinessHours(e.target.value)} placeholder="T2-CN: 8:00 - 22:00" />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* Tab: Social */}
+        <TabsContent value="social" className="mt-6 space-y-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Share2 className="h-5 w-5 text-primary" /> Mạng xã hội & Website
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><Globe className="h-3.5 w-3.5" /> Website</Label>
+                  <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://..." />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Facebook className="h-3.5 w-3.5" /> Facebook</Label>
+                    <Input value={facebookUrl} onChange={(e) => setFacebookUrl(e.target.value)} placeholder="https://facebook.com/..." />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2"><Instagram className="h-3.5 w-3.5" /> Instagram</Label>
+                    <Input value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/..." />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5" /> Zalo</Label>
+                    <Input value={zaloUrl} onChange={(e) => setZaloUrl(e.target.value)} placeholder="https://zalo.me/..." />
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Hiển thị thống kê công khai</Label>
+                    <p className="text-xs text-muted-foreground">Số lượng link, doanh thu tổng (ẩn nếu tắt)</p>
+                  </div>
+                  <Switch checked={showStats} onCheckedChange={setShowStats} />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
         {/* Tab: Branding */}
         <TabsContent value="branding" className="mt-6 space-y-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-primary" /> Phong cách
+                </CardTitle>
+                <CardDescription>Chọn theme cho trang công khai</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: "modern", name: "Modern", desc: "Tối giản" },
+                    { id: "vibrant", name: "Vibrant", desc: "Gradient nổi" },
+                    { id: "classic", name: "Classic", desc: "Cổ điển" },
+                    { id: "dark", name: "Dark", desc: "Nền tối" },
+                  ].map((t) => (
+                    <button key={t.id} type="button" onClick={() => setThemeStyle(t.id)}
+                      className={`p-3 rounded-xl border-2 text-left transition-all ${themeStyle === t.id ? "border-primary shadow-md" : "border-muted hover:border-primary/50"}`}>
+                      <div className="h-10 rounded mb-2" style={{
+                        background: t.id === "dark" ? "linear-gradient(135deg, #1f2937, #111827)"
+                          : t.id === "classic" ? "linear-gradient(135deg, #92400e, #d97706)"
+                          : t.id === "vibrant" ? `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
+                          : `linear-gradient(135deg, ${primaryColor}aa, ${secondaryColor}aa)`,
+                      }} />
+                      <p className="font-semibold text-sm">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">{t.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Card>
               <CardHeader>
