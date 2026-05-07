@@ -14,6 +14,16 @@ export interface MerchantStore {
   secondary_color: string;
   footer_text: string | null;
   is_active: boolean;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  business_hours: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  zalo_url: string | null;
+  website_url: string | null;
+  show_stats: boolean;
+  theme_style: string;
   created_at: string;
   updated_at: string;
 }
