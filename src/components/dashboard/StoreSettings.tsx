@@ -186,8 +186,10 @@ const StoreSettings = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="info">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
           <TabsTrigger value="info" className="gap-2"><Type className="h-4 w-4" /> Thông tin</TabsTrigger>
+          <TabsTrigger value="contact" className="gap-2"><Phone className="h-4 w-4" /> Liên hệ</TabsTrigger>
+          <TabsTrigger value="social" className="gap-2"><Share2 className="h-4 w-4" /> Mạng XH</TabsTrigger>
           <TabsTrigger value="branding" className="gap-2"><Palette className="h-4 w-4" /> Thương hiệu</TabsTrigger>
           <TabsTrigger value="preview" className="gap-2"><Eye className="h-4 w-4" /> Xem trước</TabsTrigger>
         </TabsList>
