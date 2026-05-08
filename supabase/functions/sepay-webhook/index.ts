@@ -111,6 +111,32 @@ Deno.serve(async (req) => {
     // Extract payment code from transfer content
     const contentUpper = payload.content.toUpperCase();
     const codeMatch = contentUpper.match(/PG-[A-Z0-9]{6,}/);
+    const topupMatch = contentUpper.match(/NAP[A-Z0-9]{6,}/);
+
+    // ===== TOPUP DETECTION (auto-credit merchant balance) =====
+    if (topupMatch) {
+      const topupCode = topupMatch[0];
+      const { data: topupMerchant } = await supabase
+        .from("merchants").select("id, business_name").eq("topup_code", topupCode).maybeSingle();
+      if (topupMerchant) {
+        const dupCheck = payload.referenceCode || String(payload.id);
+        const { data: existing } = await supabase
+          .from("balance_topups").select("id").eq("bank_reference", dupCheck).maybeSingle();
+        if (existing) {
+          return jsonResponse({ success: true, message: "Topup already processed" });
+        }
+        await supabase.rpc("credit_merchant_balance", {
+          p_merchant_id: topupMerchant.id,
+          p_amount: payload.transferAmount,
+          p_bank_reference: dupCheck,
+          p_transfer_content: payload.content,
+          p_source: "sepay",
+          p_note: null,
+        });
+        console.log("Credited balance for", topupMerchant.id, payload.transferAmount);
+        return jsonResponse({ success: true, message: "Balance credited", merchant_id: topupMerchant.id });
+      }
+    }
 
     if (!codeMatch && !merchant) {
       console.log("No payment code and no merchant identified");
