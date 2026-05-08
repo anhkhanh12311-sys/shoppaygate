@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, Webhook, User, Menu, X, Shield, Store,
-  Activity, Filter, Users, Volume2, Brain, Database, Rocket,
+  Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +27,7 @@ import VoiceAnnouncerSettings from "@/components/dashboard/VoiceAnnouncerSetting
 import SepaySync from "@/components/dashboard/SepaySync";
 import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
+import TopupBalance from "@/components/dashboard/TopupBalance";
 
 const navSections = [
   {
@@ -45,6 +46,7 @@ const navSections = [
     items: [
       { value: "create-link", label: "Tạo link", icon: Link2 },
       { value: "qr-static", label: "QR tĩnh", icon: QrCode },
+      { value: "topup", label: "Nạp số dư", icon: Wallet },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
     ],
   },
@@ -141,6 +143,7 @@ const Dashboard = () => {
     { key: "settings", component: <BankSettings /> },
     { key: "create-link", component: <CreatePaymentLink /> },
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
+    { key: "topup", component: <TopupBalance /> },
     { key: "gateway-rental", component: <GatewayRental /> },
     { key: "webhook", component: <WebhookSettings /> },
   ];

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      balance_topups: {
+        Row: {
+          amount: number
+          bank_reference: string | null
+          created_at: string
+          id: string
+          merchant_id: string
+          note: string | null
+          source: string
+          transfer_content: string | null
+        }
+        Insert: {
+          amount: number
+          bank_reference?: string | null
+          created_at?: string
+          id?: string
+          merchant_id: string
+          note?: string | null
+          source?: string
+          transfer_content?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_reference?: string | null
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          note?: string | null
+          source?: string
+          transfer_content?: string | null
+        }
+        Relationships: []
+      }
       merchant_banks: {
         Row: {
           bank_account_name: string
@@ -282,6 +315,7 @@ export type Database = {
       merchants: {
         Row: {
           auth_user_id: string
+          balance: number
           bank_account_name: string | null
           bank_account_number: string | null
           bank_name: string | null
@@ -290,12 +324,14 @@ export type Database = {
           email: string
           id: string
           phone: string | null
+          topup_code: string | null
           updated_at: string
           webhook_enabled: boolean | null
           webhook_url: string | null
         }
         Insert: {
           auth_user_id: string
+          balance?: number
           bank_account_name?: string | null
           bank_account_number?: string | null
           bank_name?: string | null
@@ -304,12 +340,14 @@ export type Database = {
           email: string
           id?: string
           phone?: string | null
+          topup_code?: string | null
           updated_at?: string
           webhook_enabled?: boolean | null
           webhook_url?: string | null
         }
         Update: {
           auth_user_id?: string
+          balance?: number
           bank_account_name?: string | null
           bank_account_number?: string | null
           bank_name?: string | null
@@ -318,6 +356,7 @@ export type Database = {
           email?: string
           id?: string
           phone?: string | null
+          topup_code?: string | null
           updated_at?: string
           webhook_enabled?: boolean | null
           webhook_url?: string | null
@@ -333,6 +372,7 @@ export type Database = {
           expires_at: string | null
           id: string
           is_static: boolean
+          is_topup: boolean
           merchant_id: string
           status: string
         }
@@ -344,6 +384,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_static?: boolean
+          is_topup?: boolean
           merchant_id: string
           status?: string
         }
@@ -355,6 +396,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           is_static?: boolean
+          is_topup?: boolean
           merchant_id?: string
           status?: string
         }
@@ -364,6 +406,50 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_purchases: {
+        Row: {
+          amount_paid: number
+          billing_cycle: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          merchant_id: string
+          paid_from: string
+          plan_code: string
+          plan_id: string
+        }
+        Insert: {
+          amount_paid: number
+          billing_cycle: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          merchant_id: string
+          paid_from?: string
+          plan_code: string
+          plan_id: string
+        }
+        Update: {
+          amount_paid?: number
+          billing_cycle?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          merchant_id?: string
+          paid_from?: string
+          plan_code?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_purchases_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -547,6 +633,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_balance: {
+        Args: { p_amount: number; p_merchant_id: string; p_note: string }
+        Returns: number
+      }
+      admin_grant_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      admin_revoke_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       count_merchant_payment_links: {
         Args: {
           p_is_static?: boolean
@@ -558,6 +662,17 @@ export type Database = {
       count_merchant_transactions: {
         Args: { p_merchant_id: string; p_status?: string }
         Returns: number
+      }
+      credit_merchant_balance: {
+        Args: {
+          p_amount: number
+          p_bank_reference: string
+          p_merchant_id: string
+          p_note?: string
+          p_source?: string
+          p_transfer_content: string
+        }
+        Returns: string
       }
       get_admin_stats: { Args: never; Returns: Json }
       get_daily_revenue: {
@@ -610,6 +725,10 @@ export type Database = {
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: string
+      }
+      subscribe_to_plan_paid: {
+        Args: { p_billing_cycle?: string; p_plan_code: string }
+        Returns: Json
       }
       update_my_merchant_secrets: {
         Args: {

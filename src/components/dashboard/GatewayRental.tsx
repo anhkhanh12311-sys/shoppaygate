@@ -70,12 +70,12 @@ const GatewayRental = () => {
 
   const subscribe = async (code: string) => {
     setSubscribing(code);
-    const { error } = await (supabase as any).rpc("subscribe_to_plan", {
+    const { data, error } = await (supabase as any).rpc("subscribe_to_plan_paid", {
       p_plan_code: code, p_billing_cycle: cycle,
     });
     setSubscribing(null);
-    if (error) return toast.error("Đăng ký gói thất bại: " + error.message);
-    toast.success("Đăng ký gói thành công!");
+    if (error) return toast.error("Đăng ký thất bại: " + error.message);
+    toast.success(`Đăng ký gói thành công! Số dư còn: ${new Intl.NumberFormat("vi-VN").format(Number((data as any)?.balance_left ?? 0))}đ`);
     load();
   };
 
