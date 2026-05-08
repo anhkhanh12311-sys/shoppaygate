@@ -5,3 +5,5 @@
  
  [functions.check-pending-transactions]
  verify_jwt = false
+[functions.send-topup-callback]
+verify_jwt = true

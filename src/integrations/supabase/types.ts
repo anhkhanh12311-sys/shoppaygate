@@ -223,6 +223,62 @@ export type Database = {
           },
         ]
       }
+      merchant_subscriptions: {
+        Row: {
+          auto_renew: boolean
+          billing_cycle: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          merchant_id: string
+          plan_id: string
+          started_at: string
+          status: string
+          topup_callback_url: string | null
+          topup_secret: string | null
+          tx_used: number
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          billing_cycle?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          merchant_id: string
+          plan_id: string
+          started_at?: string
+          status?: string
+          topup_callback_url?: string | null
+          topup_secret?: string | null
+          tx_used?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean
+          billing_cycle?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          merchant_id?: string
+          plan_id?: string
+          started_at?: string
+          status?: string
+          topup_callback_url?: string | null
+          topup_secret?: string | null
+          tx_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           auth_user_id: string
@@ -311,6 +367,108 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          features: Json
+          fee_percent: number
+          id: string
+          is_active: boolean
+          monthly_tx_limit: number
+          name: string
+          price_monthly: number
+          price_yearly: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          features?: Json
+          fee_percent?: number
+          id?: string
+          is_active?: boolean
+          monthly_tx_limit?: number
+          name: string
+          price_monthly?: number
+          price_yearly?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          features?: Json
+          fee_percent?: number
+          id?: string
+          is_active?: boolean
+          monthly_tx_limit?: number
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      topup_callbacks: {
+        Row: {
+          amount: number
+          attempt_count: number
+          callback_url: string
+          created_at: string
+          customer_ref: string | null
+          delivered_at: string | null
+          error: string | null
+          http_status: number | null
+          id: string
+          merchant_id: string
+          payload: Json
+          response_body: string | null
+          signature: string | null
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          attempt_count?: number
+          callback_url: string
+          created_at?: string
+          customer_ref?: string | null
+          delivered_at?: string | null
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          merchant_id: string
+          payload: Json
+          response_body?: string | null
+          signature?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          attempt_count?: number
+          callback_url?: string
+          created_at?: string
+          customer_ref?: string | null
+          delivered_at?: string | null
+          error?: string | null
+          http_status?: number | null
+          id?: string
+          merchant_id?: string
+          payload?: Json
+          response_body?: string | null
+          signature?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -449,6 +607,10 @@ export type Database = {
         Returns: string
       }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
+      subscribe_to_plan: {
+        Args: { p_billing_cycle?: string; p_plan_code: string }
+        Returns: string
+      }
       update_my_merchant_secrets: {
         Args: {
           p_clear_sepay?: boolean
@@ -458,6 +620,10 @@ export type Database = {
           p_webhook_api_key?: string
           p_webhook_secret?: string
         }
+        Returns: undefined
+      }
+      update_topup_config: {
+        Args: { p_callback_url: string; p_secret: string }
         Returns: undefined
       }
     }

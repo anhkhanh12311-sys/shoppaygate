@@ -255,6 +255,77 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ===== AUTO-BANK TOPUP CALLBACK (gateway rental tenants) =====
+    try {
+      const { data: sub } = await supabase
+        .from("merchant_subscriptions")
+        .select("topup_callback_url, topup_secret, status, tx_used")
+        .eq("merchant_id", merchant.id)
+        .maybeSingle();
+
+      if (sub?.topup_callback_url && sub.status !== "expired") {
+        const cleaned = payload.content.replace(/\s+/g, " ").trim();
+        const refMatch = cleaned.toUpperCase().match(/PG-[A-Z0-9]+\s+(\S+)/);
+        const customer_ref = refMatch ? refMatch[1] : null;
+
+        const topupPayload = {
+          event: "topup.success",
+          customer_ref,
+          amount: payload.transferAmount,
+          transaction_id: transactionId,
+          payment_code: paymentLink.code,
+          merchant_id: merchant.id,
+          bank_reference: dupCheck,
+          timestamp: new Date().toISOString(),
+        };
+        const topupStr = JSON.stringify(topupPayload);
+        const topupSig = sub.topup_secret
+          ? createHmac("sha256", sub.topup_secret).update(topupStr).digest("hex")
+          : "";
+
+        let httpStatus = 0, respBody = "", status = "failed";
+        let err: string | null = null;
+        try {
+          const r = await fetch(sub.topup_callback_url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-PayGate-Event": "topup.success",
+              "X-PayGate-Signature": topupSig,
+            },
+            body: topupStr,
+          });
+          httpStatus = r.status;
+          respBody = (await r.text()).slice(0, 2000);
+          status = r.ok ? "success" : "failed";
+        } catch (e) {
+          err = (e as Error).message;
+        }
+
+        await supabase.from("topup_callbacks").insert({
+          merchant_id: merchant.id,
+          transaction_id: transactionId,
+          customer_ref,
+          amount: payload.transferAmount,
+          callback_url: sub.topup_callback_url,
+          payload: topupPayload,
+          signature: topupSig,
+          http_status: httpStatus,
+          response_body: respBody,
+          status,
+          error: err,
+          delivered_at: status === "success" ? new Date().toISOString() : null,
+        });
+
+        await supabase
+          .from("merchant_subscriptions")
+          .update({ tx_used: (sub.tx_used ?? 0) + 1 })
+          .eq("merchant_id", merchant.id);
+      }
+    } catch (topupErr) {
+      console.error("Topup callback error:", topupErr);
+    }
+
     // SePay expects {"success": true} with 200
     return jsonResponse({
       success: true,
