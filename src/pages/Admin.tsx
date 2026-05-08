@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   Shield, Users, BarChart3, Settings, LogOut,
   Menu, X, Activity, Database, Globe, Receipt,
+  Package, CreditCard, Store, Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,11 +17,19 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUserManagement from "@/components/admin/AdminUserManagement";
 import AdminTransactions from "@/components/admin/AdminTransactions";
+import AdminPlans from "@/components/admin/AdminPlans";
+import AdminSubscriptions from "@/components/admin/AdminSubscriptions";
+import AdminStores from "@/components/admin/AdminStores";
+import AdminBalances from "@/components/admin/AdminBalances";
 
 const adminNavItems = [
   { value: "overview", label: "Tổng quan", icon: BarChart3 },
   { value: "transactions", label: "Giao dịch", icon: Receipt },
   { value: "users", label: "Người dùng", icon: Users },
+  { value: "balances", label: "Số dư", icon: Wallet },
+  { value: "plans", label: "Gói cước", icon: Package },
+  { value: "subscriptions", label: "Đăng ký gói", icon: CreditCard },
+  { value: "stores", label: "Cửa hàng", icon: Store },
   { value: "system", label: "Hệ thống", icon: Settings },
 ];
 
@@ -94,6 +103,14 @@ const Admin = () => {
             onRefresh={fetchData}
           />
         );
+      case "balances":
+        return <AdminBalances />;
+      case "plans":
+        return <AdminPlans />;
+      case "subscriptions":
+        return <AdminSubscriptions />;
+      case "stores":
+        return <AdminStores />;
       case "system":
         return (
           <div className="space-y-6">
