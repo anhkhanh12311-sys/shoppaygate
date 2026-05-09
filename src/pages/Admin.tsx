@@ -21,6 +21,7 @@ import AdminPlans from "@/components/admin/AdminPlans";
 import AdminSubscriptions from "@/components/admin/AdminSubscriptions";
 import AdminStores from "@/components/admin/AdminStores";
 import AdminBalances from "@/components/admin/AdminBalances";
+import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
 
 const adminNavItems = [
   { value: "overview", label: "Tổng quan", icon: BarChart3 },
@@ -112,60 +113,7 @@ const Admin = () => {
       case "stores":
         return <AdminStores />;
       case "system":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Cài đặt hệ thống</h1>
-              <p className="text-muted-foreground">Cấu hình và quản lý hệ thống</p>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Database className="h-5 w-5" /> Cơ sở dữ liệu
-                  </CardTitle>
-                  <CardDescription>Thống kê dữ liệu hệ thống</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">Merchants</span>
-                    <span className="font-medium">{merchants.length}</span>
-                  </div>
-                  <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">Database Indexes</span>
-                    <Badge className="bg-success/20 text-success">Tối ưu</Badge>
-                  </div>
-                  <div className="flex justify-between p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">Phân trang</span>
-                    <Badge className="bg-success/20 text-success">Server-side</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" /> API & Tích hợp
-                  </CardTitle>
-                  <CardDescription>Trạng thái các dịch vụ</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">SePay API</span>
-                    <Badge className="bg-success/20 text-success">Hoạt động</Badge>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">VietQR</span>
-                    <Badge className="bg-success/20 text-success">Hoạt động</Badge>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                    <span className="text-sm">Webhook</span>
-                    <Badge className="bg-success/20 text-success">Hoạt động</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        );
+        return <AdminSystemSettings />;
       default:
         return null;
     }

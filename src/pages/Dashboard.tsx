@@ -28,6 +28,7 @@ import SepaySync from "@/components/dashboard/SepaySync";
 import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
 import TopupBalance from "@/components/dashboard/TopupBalance";
+import ApiDocs from "@/components/dashboard/ApiDocs";
 
 const navSections = [
   {
@@ -48,6 +49,7 @@ const navSections = [
       { value: "qr-static", label: "QR tĩnh", icon: QrCode },
       { value: "topup", label: "Nạp số dư", icon: Wallet },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
+      { value: "api-docs", label: "Tài liệu API", icon: Brain },
     ],
   },
   {
@@ -145,6 +147,7 @@ const Dashboard = () => {
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },
     { key: "gateway-rental", component: <GatewayRental /> },
+    { key: "api-docs", component: <ApiDocs /> },
     { key: "webhook", component: <WebhookSettings /> },
   ];
 
