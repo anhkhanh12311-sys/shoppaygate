@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, Webhook, User, Menu, X, Shield, Store,
-  Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet,
+  Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Book,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,7 +49,7 @@ const navSections = [
       { value: "qr-static", label: "QR tĩnh", icon: QrCode },
       { value: "topup", label: "Nạp số dư", icon: Wallet },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
-      { value: "api-docs", label: "Tài liệu API", icon: Brain },
+      { value: "api-docs", label: "Tài liệu API", icon: Book },
     ],
   },
   {
