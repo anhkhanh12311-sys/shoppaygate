@@ -502,6 +502,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          is_public: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          is_public?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          description?: string | null
+          is_public?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       topup_callbacks: {
         Row: {
           amount: number
@@ -648,6 +675,15 @@ export type Database = {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
           p_user_id: string
+        }
+        Returns: undefined
+      }
+      admin_upsert_setting: {
+        Args: {
+          p_description?: string
+          p_is_public?: boolean
+          p_key: string
+          p_value: Json
         }
         Returns: undefined
       }

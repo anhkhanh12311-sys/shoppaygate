@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useMerchant } from "@/hooks/useMerchant";
-import { useMerchantBanks } from "@/hooks/useMerchantBanks";
+import { useSystemSetting, TopupBankSetting } from "@/hooks/useSystemSettings";
 import { toast } from "sonner";
 
 const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
@@ -15,7 +15,7 @@ const QUICK = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 const TopupBalance = () => {
   const { merchant } = useMerchant();
-  const { banks } = useMerchantBanks();
+  const { value: sysBank } = useSystemSetting<TopupBankSetting>("topup_bank");
   const [balance, setBalance] = useState<number>(0);
   const [topupCode, setTopupCode] = useState<string>("");
   const [amount, setAmount] = useState<number>(100000);
@@ -54,7 +54,7 @@ const TopupBalance = () => {
     return () => { supabase.removeChannel(ch); };
   }, [merchant]);
 
-  const defaultBank = banks.find(b => b.is_default) ?? banks[0];
+  const defaultBank = sysBank ?? null;
 
   const qrUrl = defaultBank
     ? `https://img.vietqr.io/image/${encodeURIComponent(defaultBank.bank_name)}-${defaultBank.bank_account_number}-print.png?amount=${amount}&addInfo=${encodeURIComponent(topupCode)}&accountName=${encodeURIComponent(defaultBank.bank_account_name)}`
@@ -89,7 +89,7 @@ const TopupBalance = () => {
       {!defaultBank ? (
         <Card>
           <CardContent className="p-6 text-center text-muted-foreground">
-            Vui lòng thêm tài khoản ngân hàng nhận tiền trong tab "Ngân hàng" trước.
+            Hệ thống chưa cấu hình tài khoản nhận nạp tiền. Vui lòng liên hệ admin.
           </CardContent>
         </Card>
       ) : (
