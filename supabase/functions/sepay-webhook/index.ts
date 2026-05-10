@@ -108,6 +108,32 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true, message: "Skipped outgoing transfer" });
     }
 
+    // ===== IDEMPOTENCY GUARD =====
+    // Use referenceCode (or SePay id) as the unique event key.
+    // Insert into webhook_events; if it already exists we short-circuit.
+    // This prevents duplicate processing AND limits replay/spam load.
+    const eventKey = String(payload.referenceCode || payload.id || "").trim();
+    if (!eventKey) {
+      return jsonResponse({ success: false, error: "Missing reference" }, 400);
+    }
+    const { error: idemErr } = await supabase
+      .from("webhook_events")
+      .insert({
+        source: "sepay",
+        event_key: eventKey,
+        payload: payload as unknown as Record<string, unknown>,
+      });
+    if (idemErr) {
+      // 23505 = unique_violation → duplicate replay, accept silently
+      if ((idemErr as { code?: string }).code === "23505") {
+        console.log("Duplicate webhook event ignored:", eventKey);
+        return jsonResponse({ success: true, message: "Duplicate event ignored" });
+      }
+      console.error("Idempotency insert failed:", idemErr.code);
+      return jsonResponse({ success: false, error: "Internal server error" }, 500);
+    }
+
+
     // Extract payment code from transfer content
     const contentUpper = payload.content.toUpperCase();
     const codeMatch = contentUpper.match(/PG-[A-Z0-9]{6,}/);
