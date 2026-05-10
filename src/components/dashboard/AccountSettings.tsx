@@ -103,7 +103,6 @@ const AccountSettings = () => {
     const { error } = await updateMerchant({
       business_name: data.business_name,
       phone: data.phone || null,
-      email: data.email,
     });
     setSavingProfile(false);
     if (error) {
