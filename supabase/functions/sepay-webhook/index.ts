@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("Error inserting transaction:", insertError);
-      return jsonResponse({ success: false, error: insertError.message }, 500);
+      return jsonResponse({ success: false, error: "Unable to record transaction" }, 500);
     }
 
     console.log("Transaction created:", transactionId);
@@ -361,6 +361,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Webhook processing error:", errorMessage);
-    return jsonResponse({ success: false, error: errorMessage }, 500);
+    return jsonResponse({ success: false, error: "Internal server error" }, 500);
   }
 });

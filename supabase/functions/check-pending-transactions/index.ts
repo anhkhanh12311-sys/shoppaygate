@@ -72,13 +72,13 @@
         bank_account_number: r.merchants?.bank_account_number,
       }));
  
-     if (merchantsError) {
-       console.error("Error fetching merchants:", merchantsError);
-       return new Response(
-         JSON.stringify({ success: false, error: merchantsError.message }),
-         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-       );
-     }
+    if (merchantsError) {
+      console.error("Error fetching merchants:", merchantsError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Unable to fetch merchants" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
  
      if (!merchants || merchants.length === 0) {
        console.log("No merchants with SePay API key found");
@@ -230,12 +230,12 @@
        }),
        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
      );
-   } catch (error) {
-     const errorMessage = error instanceof Error ? error.message : String(error);
-     console.error("Error checking pending transactions:", errorMessage);
-     return new Response(
-       JSON.stringify({ success: false, error: errorMessage }),
-       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-     );
-   }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error checking pending transactions:", errorMessage);
+    return new Response(
+      JSON.stringify({ success: false, error: "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
  });
