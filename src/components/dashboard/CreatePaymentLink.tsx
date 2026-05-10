@@ -94,7 +94,7 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
     defaultValues: { amount: "", description: "", expiryMinutes: "0" },
   });
 
-  const hasBankConfig = !!(defaultBank || merchant?.bank_account_number);
+  const hasBankConfig = !!defaultBank;
   const watchAmount = form.watch("amount");
   const parsedAmount = Number(watchAmount) || 0;
 
