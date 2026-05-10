@@ -361,9 +361,9 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                 code={createdLink.code}
                 amount={createdLink.amount}
                 isStatic={isStatic}
-                bankName={defaultBank?.bank_name || merchant?.bank_name || ""}
-                bankAccountNumber={defaultBank?.bank_account_number || merchant?.bank_account_number || ""}
-                bankAccountName={defaultBank?.bank_account_name || merchant?.bank_account_name || ""}
+                bankName={defaultBank?.bank_name || ""}
+                bankAccountNumber={defaultBank?.bank_account_number || ""}
+                bankAccountName={defaultBank?.bank_account_name || ""}
               />
               <div className="mt-4 flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => { setCreatedLink(null); setActiveTab("create"); }}>
