@@ -328,9 +328,9 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                   {hasBankConfig && (
                     <div className="rounded-lg bg-muted/50 p-3 space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">Ngân hàng nhận</p>
-                      <p className="text-sm font-semibold">{defaultBank?.bank_name || merchant?.bank_name}</p>
+                      <p className="text-sm font-semibold">{defaultBank?.bank_name}</p>
                       <p className="text-xs text-muted-foreground font-mono">
-                        {defaultBank?.bank_account_number || merchant?.bank_account_number}
+                        {defaultBank?.bank_account_number}
                       </p>
                     </div>
                   )}
