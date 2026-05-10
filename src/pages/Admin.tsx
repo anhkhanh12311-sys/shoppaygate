@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Shield, Users, BarChart3, Settings, LogOut,
   Menu, X, Activity, Database, Globe, Receipt,
-  Package, CreditCard, Store, Wallet,
+  Package, CreditCard, Store, Wallet, Webhook,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import AdminSubscriptions from "@/components/admin/AdminSubscriptions";
 import AdminStores from "@/components/admin/AdminStores";
 import AdminBalances from "@/components/admin/AdminBalances";
 import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
+import AdminMerchantCallbacks from "@/components/admin/AdminMerchantCallbacks";
 
 const adminNavItems = [
   { value: "overview", label: "Tổng quan", icon: BarChart3 },
@@ -30,6 +31,7 @@ const adminNavItems = [
   { value: "balances", label: "Số dư", icon: Wallet },
   { value: "plans", label: "Gói cước", icon: Package },
   { value: "subscriptions", label: "Đăng ký gói", icon: CreditCard },
+  { value: "callbacks", label: "Callback merchant", icon: Webhook },
   { value: "stores", label: "Cửa hàng", icon: Store },
   { value: "system", label: "Hệ thống", icon: Settings },
 ];
@@ -112,6 +114,8 @@ const Admin = () => {
         return <AdminSubscriptions />;
       case "stores":
         return <AdminStores />;
+      case "callbacks":
+        return <AdminMerchantCallbacks />;
       case "system":
         return <AdminSystemSettings />;
       default:
