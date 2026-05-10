@@ -678,6 +678,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_set_merchant_webhook: {
+        Args: {
+          p_enabled: boolean
+          p_merchant_id: string
+          p_webhook_url: string
+        }
+        Returns: undefined
+      }
+      admin_upsert_merchant_callback: {
+        Args: {
+          p_callback_url: string
+          p_merchant_id: string
+          p_secret: string
+        }
+        Returns: undefined
+      }
       admin_upsert_setting: {
         Args: {
           p_description?: string
