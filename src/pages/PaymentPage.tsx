@@ -93,7 +93,7 @@ const PaymentPage = () => {
 
       const { data: paymentLink, error: linkError } = await supabase
         .from("payment_links")
-        .select("*, merchants(id, business_name, bank_name, bank_account_number, bank_account_name)")
+        .select("*, merchants(id, business_name)")
         .eq("code", code)
         .eq("status", "active")
         .maybeSingle();
