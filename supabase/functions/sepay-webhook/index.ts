@@ -361,6 +361,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Webhook processing error:", errorMessage);
-    return jsonResponse({ success: false, error: errorMessage }, 500);
+    return jsonResponse({ success: false, error: "Internal server error" }, 500);
   }
 });
