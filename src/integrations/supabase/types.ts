@@ -86,6 +86,13 @@ export type Database = {
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "merchant_banks_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       merchant_secrets: {
@@ -116,6 +123,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: true
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_secrets_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -166,6 +180,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_staff_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -252,6 +273,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: true
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_stores_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -406,6 +434,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -626,6 +661,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transactions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transactions_payment_link_id_fkey"
             columns: ["payment_link_id"]
             isOneToOne: false
@@ -655,9 +697,74 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events: {
+        Row: {
+          created_at: string
+          event_key: string
+          id: string
+          payload: Json | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          event_key: string
+          id?: string
+          payload?: Json | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string
+          id?: string
+          payload?: Json | null
+          source?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      merchants_safe: {
+        Row: {
+          auth_user_id: string | null
+          balance: number | null
+          business_name: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          phone: string | null
+          topup_code: string | null
+          updated_at: string | null
+          webhook_enabled: boolean | null
+          webhook_url: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          balance?: number | null
+          business_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          phone?: string | null
+          topup_code?: string | null
+          updated_at?: string | null
+          webhook_enabled?: boolean | null
+          webhook_url?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          balance?: number | null
+          business_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          phone?: string | null
+          topup_code?: string | null
+          updated_at?: string | null
+          webhook_enabled?: boolean | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_adjust_balance: {
