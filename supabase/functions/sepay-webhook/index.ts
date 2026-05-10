@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("Error inserting transaction:", insertError);
-      return jsonResponse({ success: false, error: insertError.message }, 500);
+      return jsonResponse({ success: false, error: "Unable to record transaction" }, 500);
     }
 
     console.log("Transaction created:", transactionId);
