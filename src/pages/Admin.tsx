@@ -114,6 +114,8 @@ const Admin = () => {
         return <AdminSubscriptions />;
       case "stores":
         return <AdminStores />;
+      case "callbacks":
+        return <AdminMerchantCallbacks />;
       case "system":
         return <AdminSystemSettings />;
       default:
