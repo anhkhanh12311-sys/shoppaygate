@@ -230,12 +230,12 @@
        }),
        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
      );
-   } catch (error) {
-     const errorMessage = error instanceof Error ? error.message : String(error);
-     console.error("Error checking pending transactions:", errorMessage);
-     return new Response(
-       JSON.stringify({ success: false, error: errorMessage }),
-       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-     );
-   }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Error checking pending transactions:", errorMessage);
+    return new Response(
+      JSON.stringify({ success: false, error: "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
  });
