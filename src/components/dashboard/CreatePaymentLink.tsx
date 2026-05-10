@@ -94,7 +94,7 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
     defaultValues: { amount: "", description: "", expiryMinutes: "0" },
   });
 
-  const hasBankConfig = !!(defaultBank || merchant?.bank_account_number);
+  const hasBankConfig = !!defaultBank;
   const watchAmount = form.watch("amount");
   const parsedAmount = Number(watchAmount) || 0;
 
@@ -328,9 +328,9 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                   {hasBankConfig && (
                     <div className="rounded-lg bg-muted/50 p-3 space-y-1">
                       <p className="text-xs font-medium text-muted-foreground">Ngân hàng nhận</p>
-                      <p className="text-sm font-semibold">{defaultBank?.bank_name || merchant?.bank_name}</p>
+                      <p className="text-sm font-semibold">{defaultBank?.bank_name}</p>
                       <p className="text-xs text-muted-foreground font-mono">
-                        {defaultBank?.bank_account_number || merchant?.bank_account_number}
+                        {defaultBank?.bank_account_number}
                       </p>
                     </div>
                   )}
@@ -361,9 +361,9 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                 code={createdLink.code}
                 amount={createdLink.amount}
                 isStatic={isStatic}
-                bankName={defaultBank?.bank_name || merchant?.bank_name || ""}
-                bankAccountNumber={defaultBank?.bank_account_number || merchant?.bank_account_number || ""}
-                bankAccountName={defaultBank?.bank_account_name || merchant?.bank_account_name || ""}
+                bankName={defaultBank?.bank_name || ""}
+                bankAccountNumber={defaultBank?.bank_account_number || ""}
+                bankAccountName={defaultBank?.bank_account_name || ""}
               />
               <div className="mt-4 flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => { setCreatedLink(null); setActiveTab("create"); }}>

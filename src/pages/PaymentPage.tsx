@@ -93,7 +93,7 @@ const PaymentPage = () => {
 
       const { data: paymentLink, error: linkError } = await supabase
         .from("payment_links")
-        .select("*, merchants(id, business_name, bank_name, bank_account_number, bank_account_name)")
+        .select("*, merchants(id, business_name)")
         .eq("code", code)
         .eq("status", "active")
         .maybeSingle();
@@ -147,13 +147,7 @@ const PaymentPage = () => {
         bankInfo = firstBank;
       }
 
-      if (!bankInfo && merchant?.bank_account_number) {
-        bankInfo = {
-          bank_name: merchant.bank_name || "",
-          bank_account_number: merchant.bank_account_number || "",
-          bank_account_name: merchant.bank_account_name || "",
-        };
-      }
+      // No legacy fallback: bank info MUST come from merchant_banks table.
 
       setPaymentInfo({
         id: paymentLink.id, code: paymentLink.code, amount: paymentLink.amount,
