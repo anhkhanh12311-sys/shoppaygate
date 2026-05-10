@@ -176,14 +176,16 @@ async def topup(req: Request):
       </Alert>
 
       <Tabs defaultValue="overview">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 w-full">
-          <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
-          <TabsTrigger value="callback">Callback</TabsTrigger>
-          <TabsTrigger value="signature">Chữ ký</TabsTrigger>
-          <TabsTrigger value="examples">Code mẫu</TabsTrigger>
-          <TabsTrigger value="checklist">Go-live</TabsTrigger>
-        </TabsList>
+        <div className="-mx-1 overflow-x-auto pb-1">
+          <TabsList className="inline-flex w-max md:grid md:w-full md:grid-cols-6">
+            <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+            <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
+            <TabsTrigger value="callback">Callback</TabsTrigger>
+            <TabsTrigger value="signature">Chữ ký</TabsTrigger>
+            <TabsTrigger value="examples">Code mẫu</TabsTrigger>
+            <TabsTrigger value="checklist">Go-live</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-4">
           <Card>
