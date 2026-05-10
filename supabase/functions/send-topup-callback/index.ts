@@ -32,14 +32,36 @@ Deno.serve(async (req) => {
     });
 
     const body = await req.json().catch(() => ({}));
-    const { test = true, customer_ref = "TEST_USER", amount = 10000, transaction_id = null } = body;
+    const {
+      test = true,
+      customer_ref = "TEST_USER",
+      amount = 10000,
+      transaction_id = null,
+      merchant_id: targetMerchantId = null,
+    } = body;
 
     const admin = createClient(supabaseUrl, serviceKey);
-    const { data: merchant } = await admin
-      .from("merchants").select("id").eq("auth_user_id", user.id).maybeSingle();
-    if (!merchant) return new Response(JSON.stringify({ error: "No merchant" }), {
+
+    // Resolve target merchant. Admin may target any merchant via merchant_id; otherwise resolve from JWT.
+    let merchantId: string | null = null;
+    if (targetMerchantId) {
+      const { data: roles } = await admin
+        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
+      if (!roles || roles.length === 0) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      merchantId = targetMerchantId;
+    } else {
+      const { data: merchant } = await admin
+        .from("merchants").select("id").eq("auth_user_id", user.id).maybeSingle();
+      merchantId = merchant?.id ?? null;
+    }
+    if (!merchantId) return new Response(JSON.stringify({ error: "No merchant" }), {
       status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+    const merchant = { id: merchantId };
 
     const { data: sub } = await admin
       .from("merchant_subscriptions")
