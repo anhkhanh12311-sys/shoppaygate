@@ -91,76 +91,37 @@ const PaymentPage = () => {
     const fetchPayment = async () => {
       if (!code) { setError("Link thanh toán không hợp lệ"); setLoading(false); return; }
 
-      const { data: paymentLink, error: linkError } = await supabase
-        .from("payment_links")
-        .select("*, merchants(id, business_name)")
-        .eq("code", code)
-        .eq("status", "active")
-        .maybeSingle();
+      const { data: rows, error: rpcErr } = await supabase
+        .rpc("get_public_payment_link", { p_code: code });
 
-      if (linkError || !paymentLink) {
-        // Check if already completed
-        const { data: completedLink } = await supabase
-          .from("payment_links")
-          .select("*, merchants(id, business_name)")
-          .eq("code", code)
-          .eq("status", "completed")
-          .maybeSingle();
-
-        if (completedLink) {
-          const m = completedLink.merchants as any;
-          setPaymentInfo({
-            id: completedLink.id, code: completedLink.code, amount: completedLink.amount,
-            description: completedLink.description, status: "completed",
-            merchant_id: completedLink.merchant_id,
-            merchant: { business_name: m.business_name }, bank: null,
-          });
-          setPaymentStatus("completed");
-          setLoading(false);
-          return;
-        }
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (rpcErr || !row) {
         setError("Link thanh toán không tồn tại hoặc đã hết hạn");
         setLoading(false);
         return;
       }
 
-      const merchant = paymentLink.merchants as any;
-
-      // Fetch default bank
-      let bankInfo = null;
-      const { data: defaultBank } = await supabase
-        .from("merchant_banks")
-        .select("bank_name, bank_account_number, bank_account_name")
-        .eq("merchant_id", paymentLink.merchant_id)
-        .eq("is_default", true)
-        .maybeSingle();
-      bankInfo = defaultBank;
-
-      if (!bankInfo) {
-        const { data: firstBank } = await supabase
-          .from("merchant_banks")
-          .select("bank_name, bank_account_number, bank_account_name")
-          .eq("merchant_id", paymentLink.merchant_id)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        bankInfo = firstBank;
-      }
-
-      // No legacy fallback: bank info MUST come from merchant_banks table.
+      const bankInfo = row.bank_account_number
+        ? {
+            bank_name: row.bank_name,
+            bank_account_number: row.bank_account_number,
+            bank_account_name: row.bank_account_name,
+          }
+        : null;
 
       setPaymentInfo({
-        id: paymentLink.id, code: paymentLink.code, amount: paymentLink.amount,
-        description: paymentLink.description, status: paymentLink.status,
-        merchant_id: paymentLink.merchant_id,
-        merchant: { business_name: merchant.business_name },
+        id: row.id, code: row.code, amount: row.amount,
+        description: row.description, status: row.status,
+        merchant_id: row.merchant_id,
+        merchant: { business_name: row.merchant_business_name },
         bank: bankInfo,
       });
-      setPaymentStatus(paymentLink.status === "completed" ? "completed" : "pending");
+      setPaymentStatus(row.status === "completed" ? "completed" : "pending");
       setLoading(false);
     };
     fetchPayment();
   }, [code]);
+
 
   // Realtime subscription
   useEffect(() => {
@@ -205,10 +166,11 @@ const PaymentPage = () => {
       if (cancelled) return;
       setIsChecking(true);
       try {
-        // 1) Check DB status (webhook có thể đã ghi)
-        const { data } = await supabase
-          .from("payment_links").select("status").eq("id", paymentInfo.id).maybeSingle();
-        if (data?.status === "completed") { markCompleted(); return; }
+        // 1) Check status via public RPC (webhook có thể đã ghi)
+        const { data: st } = await supabase
+          .rpc("get_public_payment_status", { p_code: paymentInfo.code });
+        if (st === "completed") { markCompleted(); return; }
+
 
         // 2) Mỗi 2 lần, chủ động pull SePay API qua edge function
         if (count % 2 === 0) {
@@ -238,9 +200,10 @@ const PaymentPage = () => {
       await supabase.functions.invoke("check-pending-transactions", {
         body: { payment_link_id: paymentInfo.id },
       });
-      const { data } = await supabase
-        .from("payment_links").select("status").eq("id", paymentInfo.id).single();
-      if (data?.status === "completed") {
+      const { data: st } = await supabase
+        .rpc("get_public_payment_status", { p_code: paymentInfo.code });
+
+      if (st === "completed") {
         markCompleted();
       } else {
         toast({ title: "Chưa nhận được thanh toán", description: "Hệ thống sẽ tiếp tục kiểm tra tự động" });
