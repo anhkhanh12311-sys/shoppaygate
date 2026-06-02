@@ -851,6 +851,24 @@ export type Database = {
           webhook_secret: string
         }[]
       }
+      get_public_payment_link: {
+        Args: { p_code: string }
+        Returns: {
+          amount: number
+          bank_account_name: string
+          bank_account_number: string
+          bank_name: string
+          code: string
+          description: string
+          id: string
+          is_static: boolean
+          is_topup: boolean
+          merchant_business_name: string
+          merchant_id: string
+          status: string
+        }[]
+      }
+      get_public_payment_status: { Args: { p_code: string }; Returns: string }
       get_top_merchants: {
         Args: { p_limit?: number }
         Returns: {
