@@ -203,7 +203,7 @@ const PaymentPage = () => {
       const { data: st } = await supabase
         .rpc("get_public_payment_status", { p_code: paymentInfo.code });
 
-      if (data?.status === "completed") {
+      if (st === "completed") {
         markCompleted();
       } else {
         toast({ title: "Chưa nhận được thanh toán", description: "Hệ thống sẽ tiếp tục kiểm tra tự động" });
