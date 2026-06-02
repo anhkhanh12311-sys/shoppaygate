@@ -200,8 +200,9 @@ const PaymentPage = () => {
       await supabase.functions.invoke("check-pending-transactions", {
         body: { payment_link_id: paymentInfo.id },
       });
-      const { data } = await supabase
-        .from("payment_links").select("status").eq("id", paymentInfo.id).single();
+      const { data: st } = await supabase
+        .rpc("get_public_payment_status", { p_code: paymentInfo.code });
+
       if (data?.status === "completed") {
         markCompleted();
       } else {
