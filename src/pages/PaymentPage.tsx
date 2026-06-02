@@ -91,76 +91,37 @@ const PaymentPage = () => {
     const fetchPayment = async () => {
       if (!code) { setError("Link thanh toán không hợp lệ"); setLoading(false); return; }
 
-      const { data: paymentLink, error: linkError } = await supabase
-        .from("payment_links")
-        .select("*, merchants(id, business_name)")
-        .eq("code", code)
-        .eq("status", "active")
-        .maybeSingle();
+      const { data: rows, error: rpcErr } = await supabase
+        .rpc("get_public_payment_link", { p_code: code });
 
-      if (linkError || !paymentLink) {
-        // Check if already completed
-        const { data: completedLink } = await supabase
-          .from("payment_links")
-          .select("*, merchants(id, business_name)")
-          .eq("code", code)
-          .eq("status", "completed")
-          .maybeSingle();
-
-        if (completedLink) {
-          const m = completedLink.merchants as any;
-          setPaymentInfo({
-            id: completedLink.id, code: completedLink.code, amount: completedLink.amount,
-            description: completedLink.description, status: "completed",
-            merchant_id: completedLink.merchant_id,
-            merchant: { business_name: m.business_name }, bank: null,
-          });
-          setPaymentStatus("completed");
-          setLoading(false);
-          return;
-        }
+      const row = Array.isArray(rows) ? rows[0] : null;
+      if (rpcErr || !row) {
         setError("Link thanh toán không tồn tại hoặc đã hết hạn");
         setLoading(false);
         return;
       }
 
-      const merchant = paymentLink.merchants as any;
-
-      // Fetch default bank
-      let bankInfo = null;
-      const { data: defaultBank } = await supabase
-        .from("merchant_banks")
-        .select("bank_name, bank_account_number, bank_account_name")
-        .eq("merchant_id", paymentLink.merchant_id)
-        .eq("is_default", true)
-        .maybeSingle();
-      bankInfo = defaultBank;
-
-      if (!bankInfo) {
-        const { data: firstBank } = await supabase
-          .from("merchant_banks")
-          .select("bank_name, bank_account_number, bank_account_name")
-          .eq("merchant_id", paymentLink.merchant_id)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        bankInfo = firstBank;
-      }
-
-      // No legacy fallback: bank info MUST come from merchant_banks table.
+      const bankInfo = row.bank_account_number
+        ? {
+            bank_name: row.bank_name,
+            bank_account_number: row.bank_account_number,
+            bank_account_name: row.bank_account_name,
+          }
+        : null;
 
       setPaymentInfo({
-        id: paymentLink.id, code: paymentLink.code, amount: paymentLink.amount,
-        description: paymentLink.description, status: paymentLink.status,
-        merchant_id: paymentLink.merchant_id,
-        merchant: { business_name: merchant.business_name },
+        id: row.id, code: row.code, amount: row.amount,
+        description: row.description, status: row.status,
+        merchant_id: row.merchant_id,
+        merchant: { business_name: row.merchant_business_name },
         bank: bankInfo,
       });
-      setPaymentStatus(paymentLink.status === "completed" ? "completed" : "pending");
+      setPaymentStatus(row.status === "completed" ? "completed" : "pending");
       setLoading(false);
     };
     fetchPayment();
   }, [code]);
+
 
   // Realtime subscription
   useEffect(() => {
