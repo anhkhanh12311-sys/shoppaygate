@@ -166,10 +166,11 @@ const PaymentPage = () => {
       if (cancelled) return;
       setIsChecking(true);
       try {
-        // 1) Check DB status (webhook có thể đã ghi)
-        const { data } = await supabase
-          .from("payment_links").select("status").eq("id", paymentInfo.id).maybeSingle();
-        if (data?.status === "completed") { markCompleted(); return; }
+        // 1) Check status via public RPC (webhook có thể đã ghi)
+        const { data: st } = await supabase
+          .rpc("get_public_payment_status", { p_code: paymentInfo.code });
+        if (st === "completed") { markCompleted(); return; }
+
 
         // 2) Mỗi 2 lần, chủ động pull SePay API qua edge function
         if (count % 2 === 0) {
