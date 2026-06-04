@@ -48,7 +48,7 @@ const navSections = [
       { value: "qr-static", label: "QR tĩnh", icon: QrCode },
       { value: "topup", label: "Nạp số dư", icon: Wallet },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
-      { value: "api-docs", label: "Tài liệu API", icon: Book },
+      { value: "integrations", label: "Webhook & API", icon: Plug },
     ],
   },
   {
@@ -59,7 +59,6 @@ const navSections = [
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "account", label: "Tài khoản", icon: User },
-      { value: "webhook", label: "Webhook", icon: Webhook },
     ],
   },
 ];
