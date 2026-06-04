@@ -71,7 +71,10 @@ const BalanceChanges = () => {
 
   // Realtime subscription
   useEffect(() => {
-    if (!merchant || !autoRefresh) return;
+    if (!merchant || !autoRefresh) {
+      setConnected(false);
+      return;
+    }
     const channel = supabase
       .channel("balance-changes")
       .on("postgres_changes", {
@@ -80,10 +83,26 @@ const BalanceChanges = () => {
         table: "transactions",
         filter: `merchant_id=eq.${merchant.id}`,
       }, () => fetchRecent())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+      .subscribe((status) => {
+        setConnected(status === "SUBSCRIBED");
+      });
+    return () => {
+      setConnected(false);
+      supabase.removeChannel(channel);
+    };
   }, [merchant, autoRefresh, fetchRecent]);
 
+  // Heartbeat for "last updated" UI re-render every 15s
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEntries = entries.filter(e => new Date(e.paid_at || e.created_at) >= todayStart && e.status === "completed");
+  const todayCount = todayEntries.length;
   const totalIn = entries.filter(e => e.status === "completed").reduce((s, e) => s + e.amount, 0);
   const totalPending = entries.filter(e => e.status === "pending").reduce((s, e) => s + e.amount, 0);
 
@@ -95,7 +114,26 @@ const BalanceChanges = () => {
             <Activity className="h-7 w-7 text-primary" />
             Biến động số dư
           </h1>
-          <p className="text-muted-foreground text-sm">Theo dõi giao dịch tự động theo thời gian thực</p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1.5">
+              {connected ? (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                  </span>
+                  <span className="text-success font-medium">Realtime</span>
+                </>
+              ) : (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground" />
+                  <span>Đã ngắt</span>
+                </>
+              )}
+            </span>
+            <span>·</span>
+            <span>Cập nhật {formatDistanceToNow(lastUpdate, { locale: vi, addSuffix: true })}</span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-sm">
@@ -103,14 +141,14 @@ const BalanceChanges = () => {
             <span className="hidden sm:inline">Tự động</span>
             <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
           </div>
-          <Button variant="outline" size="sm" onClick={fetchRecent}>
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="outline" size="sm" onClick={fetchRecent} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 grid-cols-2">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -137,7 +175,23 @@ const BalanceChanges = () => {
             </div>
           </CardContent>
         </Card>
+        <Card className="col-span-2 lg:col-span-1">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Hôm nay</p>
+                <p className="text-lg md:text-xl font-bold text-primary">
+                  {todayCount} GD · {formatCurrency(todayEntries.reduce((s, e) => s + e.amount, 0))}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
 
       {/* Transaction feed */}
       <Card>
