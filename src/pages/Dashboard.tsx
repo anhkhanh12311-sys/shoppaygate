@@ -3,8 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
-  History, LogOut, Webhook, User, Menu, X, Shield, Store,
-  Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Book,
+  History, LogOut, User, Menu, X, Shield, Store,
+  Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,7 @@ import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import BankSettings from "@/components/dashboard/BankSettings";
 import CreatePaymentLink from "@/components/dashboard/CreatePaymentLink";
 import TransactionHistory from "@/components/dashboard/TransactionHistory";
-import WebhookSettings from "@/components/dashboard/WebhookSettings";
+import Integrations from "@/components/dashboard/Integrations";
 import AccountSettings from "@/components/dashboard/AccountSettings";
 import StoreSettings from "@/components/dashboard/StoreSettings";
 import BalanceChanges from "@/components/dashboard/BalanceChanges";
@@ -28,7 +28,6 @@ import SepaySync from "@/components/dashboard/SepaySync";
 import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
 import TopupBalance from "@/components/dashboard/TopupBalance";
-import ApiDocs from "@/components/dashboard/ApiDocs";
 
 const navSections = [
   {
@@ -49,7 +48,7 @@ const navSections = [
       { value: "qr-static", label: "QR tĩnh", icon: QrCode },
       { value: "topup", label: "Nạp số dư", icon: Wallet },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
-      { value: "api-docs", label: "Tài liệu API", icon: Book },
+      { value: "integrations", label: "Webhook & API", icon: Plug },
     ],
   },
   {
@@ -60,7 +59,6 @@ const navSections = [
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "account", label: "Tài khoản", icon: User },
-      { value: "webhook", label: "Webhook", icon: Webhook },
     ],
   },
 ];
@@ -147,8 +145,7 @@ const Dashboard = () => {
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },
     { key: "gateway-rental", component: <GatewayRental /> },
-    { key: "api-docs", component: <ApiDocs /> },
-    { key: "webhook", component: <WebhookSettings /> },
+    { key: "integrations", component: <Integrations /> },
   ];
 
   const renderSidebarNav = () => (

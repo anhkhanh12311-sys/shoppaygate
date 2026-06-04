@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   RefreshCw, Download, CheckCircle2, AlertCircle, Clock, Zap,
-  TrendingUp, Loader2, Database,
+  TrendingUp, Loader2, Database, Timer, Radio,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useMerchant } from "@/hooks/useMerchant";
@@ -25,25 +26,34 @@ interface SyncResult {
   matched_details?: Array<{ amount: number; code: string; paid_at: string }>;
 }
 
+const AUTO_INTERVALS = [
+  { value: "0", label: "Tắt" },
+  { value: "30", label: "30 giây" },
+  { value: "60", label: "1 phút" },
+  { value: "300", label: "5 phút" },
+  { value: "900", label: "15 phút" },
+];
+
 const SepaySync = () => {
   const { merchant } = useMerchant();
   const { secrets } = useMerchantSecrets();
   const { toast } = useToast();
   const [sinceHours, setSinceHours] = useState("24");
   const [limit, setLimit] = useState("50");
+  const [autoInterval, setAutoInterval] = useState("0");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SyncResult | null>(null);
   const [lastRun, setLastRun] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState(0);
 
   const hasApiKey = !!secrets.sepay_api_key;
 
-  const runSync = async () => {
+  const runSync = useCallback(async () => {
     if (!hasApiKey) {
       toast({ variant: "destructive", title: "Chưa cấu hình SePay", description: "Vui lòng thêm API key SePay trong Cài đặt ngân hàng." });
       return;
     }
     setLoading(true);
-    setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("sepay-sync", {
         body: { since_hours: Number(sinceHours), limit: Number(limit) },
@@ -52,16 +62,43 @@ const SepaySync = () => {
       if (!data?.success) throw new Error(data?.error || "Đồng bộ thất bại");
       setResult(data as SyncResult);
       setLastRun(new Date());
-      toast({
-        title: "✨ Đồng bộ xong",
-        description: `Đã khớp ${data.matched}/${data.total_fetched} giao dịch mới`,
-      });
+      if (data.matched > 0) {
+        toast({
+          title: "✨ Đồng bộ xong",
+          description: `Đã khớp ${data.matched}/${data.total_fetched} giao dịch mới`,
+        });
+      }
     } catch (e: any) {
       toast({ variant: "destructive", title: "Lỗi đồng bộ", description: e.message });
     } finally {
       setLoading(false);
     }
-  };
+  }, [hasApiKey, sinceHours, limit, toast]);
+
+  // Auto-sync interval
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const sec = Number(autoInterval);
+    if (sec > 0 && hasApiKey) {
+      setCountdown(sec);
+      intervalRef.current = setInterval(() => {
+        setCountdown((c) => {
+          if (c <= 1) {
+            runSync();
+            return sec;
+          }
+          return c - 1;
+        });
+      }, 1000);
+    } else {
+      setCountdown(0);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [autoInterval, hasApiKey, runSync]);
+
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -127,6 +164,32 @@ const SepaySync = () => {
                   <SelectItem value="50">50</SelectItem>
                   <SelectItem value="100">100</SelectItem>
                   <SelectItem value="200">200</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-muted/30 p-3 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">Tự động đồng bộ</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              {Number(autoInterval) > 0 && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
+                  </span>
+                  {countdown}s
+                </Badge>
+              )}
+              <Select value={autoInterval} onValueChange={setAutoInterval}>
+                <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {AUTO_INTERVALS.map(o => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
