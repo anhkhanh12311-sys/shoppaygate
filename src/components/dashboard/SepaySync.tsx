@@ -48,13 +48,12 @@ const SepaySync = () => {
 
   const hasApiKey = !!secrets.sepay_api_key;
 
-  const runSync = async () => {
+  const runSync = useCallback(async () => {
     if (!hasApiKey) {
       toast({ variant: "destructive", title: "Chưa cấu hình SePay", description: "Vui lòng thêm API key SePay trong Cài đặt ngân hàng." });
       return;
     }
     setLoading(true);
-    setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("sepay-sync", {
         body: { since_hours: Number(sinceHours), limit: Number(limit) },
@@ -63,16 +62,43 @@ const SepaySync = () => {
       if (!data?.success) throw new Error(data?.error || "Đồng bộ thất bại");
       setResult(data as SyncResult);
       setLastRun(new Date());
-      toast({
-        title: "✨ Đồng bộ xong",
-        description: `Đã khớp ${data.matched}/${data.total_fetched} giao dịch mới`,
-      });
+      if (data.matched > 0) {
+        toast({
+          title: "✨ Đồng bộ xong",
+          description: `Đã khớp ${data.matched}/${data.total_fetched} giao dịch mới`,
+        });
+      }
     } catch (e: any) {
       toast({ variant: "destructive", title: "Lỗi đồng bộ", description: e.message });
     } finally {
       setLoading(false);
     }
-  };
+  }, [hasApiKey, sinceHours, limit, toast]);
+
+  // Auto-sync interval
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const sec = Number(autoInterval);
+    if (sec > 0 && hasApiKey) {
+      setCountdown(sec);
+      intervalRef.current = setInterval(() => {
+        setCountdown((c) => {
+          if (c <= 1) {
+            runSync();
+            return sec;
+          }
+          return c - 1;
+        });
+      }, 1000);
+    } else {
+      setCountdown(0);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [autoInterval, hasApiKey, runSync]);
+
 
   return (
     <div className="space-y-6 max-w-4xl">
