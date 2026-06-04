@@ -142,7 +142,7 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
       toast({ variant: "destructive", title: "Lỗi", description: "Không thể tạo. Vui lòng thử lại." });
     } else if (link) {
       const paymentUrl = `${window.location.origin}/pay/${link.code}`;
-      setCreatedLink({ url: paymentUrl, code: link.code, amount: link.amount });
+      setCreatedLink({ url: paymentUrl, code: link.code, amount: link.amount, id: (link as any).id });
       form.reset();
       setActiveTab("result");
       toast({ title: "✨ Thành công!", description: isStatic ? "Đã tạo mã QR tĩnh!" : "Đã tạo link thanh toán!" });
