@@ -145,8 +145,8 @@ const Dashboard = () => {
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },
     { key: "gateway-rental", component: <GatewayRental /> },
-    { key: "api-docs", component: <ApiDocs /> },
-    { key: "webhook", component: <WebhookSettings /> },
+    { key: "gateway-rental", component: <GatewayRental /> },
+    { key: "integrations", component: <Integrations /> },
   ];
 
   const renderSidebarNav = () => (
