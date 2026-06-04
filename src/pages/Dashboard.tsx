@@ -145,7 +145,6 @@ const Dashboard = () => {
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },
     { key: "gateway-rental", component: <GatewayRental /> },
-    { key: "gateway-rental", component: <GatewayRental /> },
     { key: "integrations", component: <Integrations /> },
   ];
 
