@@ -169,6 +169,32 @@ const SepaySync = () => {
             </div>
           </div>
 
+          <div className="rounded-xl border bg-muted/30 p-3 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">Tự động đồng bộ</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              {Number(autoInterval) > 0 && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
+                  </span>
+                  {countdown}s
+                </Badge>
+              )}
+              <Select value={autoInterval} onValueChange={setAutoInterval}>
+                <SelectTrigger className="h-9 w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {AUTO_INTERVALS.map(o => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <Button
             className="w-full gradient-primary text-primary-foreground h-12 text-base"
             disabled={loading || !hasApiKey}
