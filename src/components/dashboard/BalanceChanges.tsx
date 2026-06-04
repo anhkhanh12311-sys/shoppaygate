@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Activity, ArrowUpRight, ArrowDownRight, RefreshCw, Bell, BellOff } from "lucide-react";
+import { Activity, ArrowUpRight, ArrowDownRight, RefreshCw, Bell, BellOff, Radio, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
