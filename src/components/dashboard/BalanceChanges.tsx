@@ -62,6 +62,7 @@ const BalanceChanges = () => {
       }
       prevIdsRef.current = currentIds;
       setEntries(mapped);
+      setLastUpdate(new Date());
     }
     setLoading(false);
   }, [merchant]);
