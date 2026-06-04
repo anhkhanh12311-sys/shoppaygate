@@ -60,8 +60,9 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
   const { createPaymentLink } = usePaymentLinks();
   const [isLoading, setIsLoading] = useState(false);
   const storageKey = `paygate.lastLink.${isStatic ? "qr" : "link"}.${merchant?.id || "anon"}`;
-  const [createdLink, setCreatedLink] = useState<{ url: string; code: string; amount: number } | null>(null);
+  const [createdLink, setCreatedLink] = useState<{ url: string; code: string; amount: number; id?: string } | null>(null);
   const [activeTab, setActiveTab] = useState("create");
+  const [paymentDetected, setPaymentDetected] = useState(false);
   const { toast } = useToast();
 
   // Restore last created link from localStorage on mount / merchant change
@@ -89,6 +90,26 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createdLink, merchant?.id, isStatic]);
+
+  // Realtime: detect payment success on the currently-shown created link
+  useEffect(() => {
+    if (!merchant || !createdLink?.id || isStatic) return;
+    setPaymentDetected(false);
+    const ch = supabase
+      .channel(`link-watch-${createdLink.id}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "transactions",
+        filter: `payment_link_id=eq.${createdLink.id}`,
+      }, () => {
+        setPaymentDetected(true);
+        toast({ title: "✅ Đã nhận thanh toán!", description: `Link ${createdLink.code} đã được thanh toán` });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [merchant, createdLink?.id, isStatic, toast, createdLink?.code]);
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
