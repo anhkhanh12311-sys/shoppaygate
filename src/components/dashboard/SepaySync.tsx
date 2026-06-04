@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   RefreshCw, Download, CheckCircle2, AlertCircle, Clock, Zap,
-  TrendingUp, Loader2, Database,
+  TrendingUp, Loader2, Database, Timer, Radio,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useMerchant } from "@/hooks/useMerchant";
@@ -25,15 +26,25 @@ interface SyncResult {
   matched_details?: Array<{ amount: number; code: string; paid_at: string }>;
 }
 
+const AUTO_INTERVALS = [
+  { value: "0", label: "Tắt" },
+  { value: "30", label: "30 giây" },
+  { value: "60", label: "1 phút" },
+  { value: "300", label: "5 phút" },
+  { value: "900", label: "15 phút" },
+];
+
 const SepaySync = () => {
   const { merchant } = useMerchant();
   const { secrets } = useMerchantSecrets();
   const { toast } = useToast();
   const [sinceHours, setSinceHours] = useState("24");
   const [limit, setLimit] = useState("50");
+  const [autoInterval, setAutoInterval] = useState("0");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SyncResult | null>(null);
   const [lastRun, setLastRun] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState(0);
 
   const hasApiKey = !!secrets.sepay_api_key;
 
