@@ -346,6 +346,21 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                     )}
                   </div>
 
+                  {/* Live QR preview */}
+                  {hasBankConfig && parsedAmount >= 1000 && defaultBank && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="rounded-xl bg-white p-3 flex items-center justify-center border-2 border-primary/20"
+                    >
+                      <img
+                        alt="QR xem trước"
+                        className="w-full max-w-[200px]"
+                        src={`https://img.vietqr.io/image/${encodeURIComponent(defaultBank.bank_name)}-${defaultBank.bank_account_number}-print.png?amount=${parsedAmount}&addInfo=${encodeURIComponent("PREVIEW " + (form.watch("description") || ""))}&accountName=${encodeURIComponent(defaultBank.bank_account_name)}`}
+                      />
+                    </motion.div>
+                  )}
+
                   {/* Bank info mini */}
                   {hasBankConfig && (
                     <div className="rounded-lg bg-muted/50 p-3 space-y-1">
@@ -363,9 +378,12 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
                       <p className="text-xs text-muted-foreground">Trạng thái</p>
                       <p className="text-sm font-semibold text-primary">Sẵn sàng</p>
                     </div>
-                    <div className="rounded-lg bg-success/5 p-3 text-center">
-                      <p className="text-xs text-muted-foreground">Realtime</p>
-                      <p className="text-sm font-semibold text-success">Bật</p>
+                    <div className="rounded-lg bg-success/5 p-3 text-center flex items-center justify-center gap-1.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                      </span>
+                      <p className="text-sm font-semibold text-success">Realtime</p>
                     </div>
                   </div>
                 </CardContent>
@@ -378,6 +396,37 @@ const CreatePaymentLink = ({ isStatic = false }: CreatePaymentLinkProps) => {
         <TabsContent value="result" className="mt-6">
           {createdLink ? (
             <div className="max-w-lg mx-auto">
+              {/* Realtime status banner */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mb-4 rounded-xl border p-3 flex items-center gap-3 ${
+                  paymentDetected
+                    ? "bg-success/10 border-success/40"
+                    : "bg-primary/5 border-primary/20"
+                }`}
+              >
+                {paymentDetected ? (
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                ) : (
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
+                  </span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">
+                    {paymentDetected ? "Đã nhận thanh toán!" : "Đang chờ thanh toán..."}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {paymentDetected
+                      ? `Link ${createdLink.code} đã hoàn tất`
+                      : "Hệ thống đang theo dõi realtime — sẽ tự động cập nhật"}
+                  </p>
+                </div>
+                <Radio className={`h-4 w-4 ${paymentDetected ? "text-success" : "text-primary animate-pulse"}`} />
+              </motion.div>
+
               <CreatedLinkCard
                 url={createdLink.url}
                 code={createdLink.code}
