@@ -30,6 +30,8 @@ const BalanceChanges = () => {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [newEntryIds, setNewEntryIds] = useState<Set<string>>(new Set());
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [connected, setConnected] = useState(false);
   const prevIdsRef = useRef<Set<string>>(new Set());
 
   const fetchRecent = useCallback(async () => {
