@@ -17,7 +17,7 @@ import DashboardOverview from "@/components/dashboard/DashboardOverview";
 import BankSettings from "@/components/dashboard/BankSettings";
 import CreatePaymentLink from "@/components/dashboard/CreatePaymentLink";
 import TransactionHistory from "@/components/dashboard/TransactionHistory";
-import WebhookSettings from "@/components/dashboard/WebhookSettings";
+import Integrations from "@/components/dashboard/Integrations";
 import AccountSettings from "@/components/dashboard/AccountSettings";
 import StoreSettings from "@/components/dashboard/StoreSettings";
 import BalanceChanges from "@/components/dashboard/BalanceChanges";
@@ -28,7 +28,6 @@ import SepaySync from "@/components/dashboard/SepaySync";
 import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
 import TopupBalance from "@/components/dashboard/TopupBalance";
-import ApiDocs from "@/components/dashboard/ApiDocs";
 
 const navSections = [
   {
