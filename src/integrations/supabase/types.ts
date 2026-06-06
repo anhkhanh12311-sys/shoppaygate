@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      bill_shares: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          merchant_id: string
+          recipient: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          id?: string
+          merchant_id: string
+          recipient?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          recipient?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       merchant_banks: {
         Row: {
           bank_account_name: string
@@ -489,6 +516,90 @@ export type Database = {
           },
         ]
       }
+      shop_receipt_settings: {
+        Row: {
+          address: string | null
+          auto_open_share: boolean
+          closing: string | null
+          created_at: string
+          greeting: string | null
+          hotline: string | null
+          id: string
+          logo_url: string | null
+          merchant_id: string
+          primary_color: string
+          qr_maps_enabled: boolean
+          qr_maps_url: string | null
+          qr_zalo_enabled: boolean
+          qr_zalo_url: string | null
+          secondary_color: string
+          shop_name: string | null
+          slogan: string | null
+          social_links: Json
+          updated_at: string
+          voucher_code: string | null
+          voucher_enabled: boolean
+          voucher_expiry_days: number
+          voucher_max_uses: number | null
+          voucher_text: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          auto_open_share?: boolean
+          closing?: string | null
+          created_at?: string
+          greeting?: string | null
+          hotline?: string | null
+          id?: string
+          logo_url?: string | null
+          merchant_id: string
+          primary_color?: string
+          qr_maps_enabled?: boolean
+          qr_maps_url?: string | null
+          qr_zalo_enabled?: boolean
+          qr_zalo_url?: string | null
+          secondary_color?: string
+          shop_name?: string | null
+          slogan?: string | null
+          social_links?: Json
+          updated_at?: string
+          voucher_code?: string | null
+          voucher_enabled?: boolean
+          voucher_expiry_days?: number
+          voucher_max_uses?: number | null
+          voucher_text?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          auto_open_share?: boolean
+          closing?: string | null
+          created_at?: string
+          greeting?: string | null
+          hotline?: string | null
+          id?: string
+          logo_url?: string | null
+          merchant_id?: string
+          primary_color?: string
+          qr_maps_enabled?: boolean
+          qr_maps_url?: string | null
+          qr_zalo_enabled?: boolean
+          qr_zalo_url?: string | null
+          secondary_color?: string
+          shop_name?: string | null
+          slogan?: string | null
+          social_links?: Json
+          updated_at?: string
+          voucher_code?: string | null
+          voucher_enabled?: boolean
+          voucher_expiry_days?: number
+          voucher_max_uses?: number | null
+          voucher_text?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           code: string
@@ -851,6 +962,20 @@ export type Database = {
           webhook_secret: string
         }[]
       }
+      get_public_bill: {
+        Args: { p_transaction_id: string }
+        Returns: {
+          amount: number
+          bank_reference: string
+          merchant_business_name: string
+          merchant_id: string
+          paid_at: string
+          payment_code: string
+          status: string
+          transfer_content: string
+          tx_id: string
+        }[]
+      }
       get_public_payment_link: {
         Args: { p_code: string }
         Returns: {
@@ -869,6 +994,30 @@ export type Database = {
         }[]
       }
       get_public_payment_status: { Args: { p_code: string }; Returns: string }
+      get_public_receipt_settings: {
+        Args: { p_merchant_id: string }
+        Returns: {
+          address: string
+          closing: string
+          greeting: string
+          hotline: string
+          logo_url: string
+          primary_color: string
+          qr_maps_enabled: boolean
+          qr_maps_url: string
+          qr_zalo_enabled: boolean
+          qr_zalo_url: string
+          secondary_color: string
+          shop_name: string
+          slogan: string
+          social_links: Json
+          voucher_code: string
+          voucher_enabled: boolean
+          voucher_expiry_days: number
+          voucher_text: string
+          website: string
+        }[]
+      }
       get_top_merchants: {
         Args: { p_limit?: number }
         Returns: {
