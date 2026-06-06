@@ -28,6 +28,7 @@ import SepaySync from "@/components/dashboard/SepaySync";
 import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
 import TopupBalance from "@/components/dashboard/TopupBalance";
+import InstallPrompt from "@/components/InstallPrompt";
 
 const navSections = [
   {
