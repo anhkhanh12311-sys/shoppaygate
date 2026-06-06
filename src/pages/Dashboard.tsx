@@ -5,6 +5,7 @@ import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
+  Receipt, ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +30,8 @@ import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
 import TopupBalance from "@/components/dashboard/TopupBalance";
 import InstallPrompt from "@/components/InstallPrompt";
+import BrandedReceiptSettings from "@/components/dashboard/BrandedReceiptSettings";
+import BillHistory from "@/components/dashboard/BillHistory";
 
 const navSections = [
   {
@@ -38,6 +41,7 @@ const navSections = [
       { value: "ai-insights", label: "AI Insights", icon: Brain },
       { value: "balance", label: "Biến động số dư", icon: Activity },
       { value: "history", label: "Lịch sử GD", icon: History },
+      { value: "bill-history", label: "Lịch sử bill", icon: ReceiptText },
       { value: "smart-filter", label: "Lọc thông minh", icon: Filter },
       { value: "sepay-sync", label: "Đồng bộ SePay", icon: Database },
     ],
@@ -58,6 +62,7 @@ const navSections = [
       { value: "store", label: "Cửa hàng", icon: Store },
       { value: "staff", label: "Nhân viên", icon: Users },
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
+      { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "account", label: "Tài khoản", icon: User },
     ],
@@ -135,8 +140,10 @@ const Dashboard = () => {
     { key: "ai-insights", component: <AIInsights /> },
     { key: "balance", component: <BalanceChanges /> },
     { key: "history", component: <TransactionHistory /> },
+    { key: "bill-history", component: <BillHistory /> },
     { key: "smart-filter", component: <SmartFilter /> },
     { key: "sepay-sync", component: <SepaySync /> },
+    { key: "branded-receipt", component: <BrandedReceiptSettings /> },
     { key: "store", component: <StoreSettings /> },
     { key: "staff", component: <StaffManagement /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },

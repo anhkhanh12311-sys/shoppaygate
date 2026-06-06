@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { History, CheckCircle2, Clock, XCircle, AlertCircle, Search, Filter, X } from "lucide-react";
+import { History, CheckCircle2, Clock, XCircle, AlertCircle, Search, Filter, X, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,16 +11,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { usePaginatedTransactions } from "@/hooks/usePaginatedTransactions";
 import DataPagination from "@/components/ui/data-pagination";
+import { ShareReceiptModal } from "@/components/receipt/ShareReceiptModal";
+import { useReceiptSettings } from "@/hooks/useReceiptSettings";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 
 const TransactionHistory = () => {
   const { transactions, loading, page, setPage, totalPages, totalCount, filters, updateFilters, stats, pageSize } = usePaginatedTransactions();
+  const { settings } = useReceiptSettings();
   const [searchInput, setSearchInput] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [shareTx, setShareTx] = useState<any>(null);
 
   const handleSearch = () => {
     updateFilters({ ...filters, search: searchInput || undefined });
@@ -182,6 +186,7 @@ const TransactionHistory = () => {
                     <TableHead className="hidden md:table-cell">Nội dung CK</TableHead>
                     <TableHead className="hidden md:table-cell">Mã ngân hàng</TableHead>
                     <TableHead>Trạng thái</TableHead>
+                    <TableHead className="w-20 text-right">Bill</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -196,6 +201,13 @@ const TransactionHistory = () => {
                       </TableCell>
                       <TableCell className="hidden md:table-cell font-mono text-sm">{tx.bank_reference || "-"}</TableCell>
                       <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                      <TableCell className="text-right">
+                        {tx.status === "completed" && settings && (
+                          <Button size="icon" variant="ghost" onClick={() => setShareTx(tx)} title="Chia sẻ bill">
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -206,6 +218,23 @@ const TransactionHistory = () => {
           <DataPagination page={page} totalPages={totalPages} totalCount={totalCount} pageSize={pageSize} onPageChange={setPage} />
         </CardContent>
       </Card>
+
+      {shareTx && settings && (
+        <ShareReceiptModal
+          open={!!shareTx}
+          onOpenChange={(v) => !v && setShareTx(null)}
+          settings={settings}
+          transaction={{
+            id: shareTx.id,
+            amount: shareTx.amount,
+            status: shareTx.status,
+            paid_at: shareTx.paid_at,
+            created_at: shareTx.created_at,
+            bank_reference: shareTx.bank_reference,
+            transfer_content: shareTx.transfer_content,
+          }}
+        />
+      )}
     </div>
   );
 };
