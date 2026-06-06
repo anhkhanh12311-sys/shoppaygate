@@ -4,7 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Webhook, Loader2, Check, Copy, Eye, EyeOff, RefreshCw,
-  ExternalLink, AlertTriangle, CheckCircle2, XCircle, Info, Shield, Link2,
+  ExternalLink, AlertTriangle, CheckCircle2, XCircle, Info, Shield, Link2, FileJson,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -154,221 +154,200 @@ const WebhookSettings = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Cấu hình Webhook SePay</h1>
-        <p className="text-muted-foreground">
-          Kết nối SePay để tự động nhận thông báo giao dịch ngân hàng
-        </p>
-      </div>
-
+    <div className="space-y-5">
       {/* Step-by-step SePay Configuration Guide */}
-      <Card className="border-primary/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5 text-primary" />
+      <Card className="border-primary/20 rounded-2xl overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-base md:text-lg">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Info className="h-4 w-4 text-primary" />
+            </div>
             Hướng dẫn cấu hình trên SePay
           </CardTitle>
-          <CardDescription>
-            Làm theo các bước dưới đây để SePay tự động gửi thông báo giao dịch đến hệ thống
+          <CardDescription className="text-xs md:text-sm">
+            Làm theo 5 bước để SePay tự động gửi thông báo giao dịch về hệ thống
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-3">
           {/* Step 1 */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center p-0">1</Badge>
-              <h3 className="font-semibold">Truy cập trang Webhooks trên SePay</h3>
-            </div>
-            <p className="text-sm text-muted-foreground ml-9">
-              Đăng nhập vào{" "}
-              <a href="https://my.sepay.vn/webhooks" target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1">
+          <div className="relative rounded-xl border bg-card/40 p-3.5 sm:pl-12">
+            <span className="hidden sm:flex absolute left-3.5 top-3.5 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold items-center justify-center">1</span>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <span className="sm:hidden h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center flex-shrink-0">1</span>
+              Truy cập trang Webhooks
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+              Đăng nhập{" "}
+              <a href="https://my.sepay.vn/webhooks" target="_blank" rel="noopener noreferrer" className="text-primary font-medium underline-offset-2 hover:underline inline-flex items-center gap-1">
                 my.sepay.vn/webhooks <ExternalLink className="h-3 w-3" />
               </a>{" "}
-              → Nhấn <strong>+ Thêm webhooks</strong>
+              → nhấn <strong>+ Thêm webhooks</strong>
             </p>
           </div>
 
           {/* Step 2: Webhook URL */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center p-0">2</Badge>
-              <h3 className="font-semibold">Dán Webhook URL vào SePay</h3>
-            </div>
-            <div className="ml-9 space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Sao chép URL bên dưới và dán vào mục <strong>"Gọi đến URL"</strong> trên SePay:
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  readOnly
-                  value={sepayWebhookUrl}
-                  className="font-mono text-sm bg-muted"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => sepayWebhookUrl && copyToClipboard(sepayWebhookUrl, "Webhook URL")}
-                  disabled={!sepayWebhookUrl}
-                >
-                  {copied === "Webhook URL" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
+          <div className="relative rounded-xl border bg-card/40 p-3.5 sm:pl-12">
+            <span className="hidden sm:flex absolute left-3.5 top-3.5 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold items-center justify-center">2</span>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <span className="sm:hidden h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center flex-shrink-0">2</span>
+              Dán Webhook URL
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1.5 mb-2.5 leading-relaxed">
+              Dán URL bên dưới vào mục <strong>"Gọi đến URL"</strong>:
+            </p>
+            <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-1.5">
+              <code className="flex-1 min-w-0 truncate text-[11px] sm:text-xs font-mono px-2 text-foreground">
+                {sepayWebhookUrl || "—"}
+              </code>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="h-8 w-8 flex-shrink-0"
+                onClick={() => sepayWebhookUrl && copyToClipboard(sepayWebhookUrl, "Webhook URL")}
+                disabled={!sepayWebhookUrl}
+              >
+                {copied === "Webhook URL" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
             </div>
           </div>
 
           {/* Step 3: Events */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center p-0">3</Badge>
-              <h3 className="font-semibold">Chọn sự kiện & điều kiện</h3>
-            </div>
-            <div className="ml-9 space-y-2 text-sm text-muted-foreground">
-              <div className="grid gap-2">
-                <div className="flex items-start gap-2 p-2 bg-muted rounded-lg">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Sự kiện:</strong> Chọn "Có tiền vào" (hệ thống chỉ xử lý giao dịch tiền vào)</span>
+          <div className="relative rounded-xl border bg-card/40 p-3.5 sm:pl-12">
+            <span className="hidden sm:flex absolute left-3.5 top-3.5 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold items-center justify-center">3</span>
+            <h3 className="font-semibold text-sm flex items-center gap-2 mb-2.5">
+              <span className="sm:hidden h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center flex-shrink-0">3</span>
+              Chọn sự kiện & điều kiện
+            </h3>
+            <div className="grid gap-1.5 text-xs">
+              {[
+                ["Sự kiện", "Chọn \"Có tiền vào\""],
+                ["Tài khoản ngân hàng", "Chọn tài khoản nhận webhook"],
+                ["Webhook xác thực thanh toán", "Chọn \"Đúng\""],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-start gap-2 rounded-lg bg-muted/50 p-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground leading-snug"><strong className="text-foreground">{k}:</strong> {v}</span>
                 </div>
-                <div className="flex items-start gap-2 p-2 bg-muted rounded-lg">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Tài khoản ngân hàng:</strong> Chọn tài khoản bạn muốn nhận webhook</span>
-                </div>
-                <div className="flex items-start gap-2 p-2 bg-muted rounded-lg">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Là webhooks xác thực thanh toán:</strong> Chọn "Đúng"</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
           {/* Step 4: Auth Config */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center p-0">4</Badge>
-              <h3 className="font-semibold">Cấu hình chứng thực</h3>
-            </div>
-            <div className="ml-9 space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Chọn kiểu chứng thực <strong>"API Key"</strong> trên SePay, sau đó dán API Key bên dưới:
-              </p>
+          <div className="relative rounded-xl border bg-card/40 p-3.5 sm:pl-12">
+            <span className="hidden sm:flex absolute left-3.5 top-3.5 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold items-center justify-center">4</span>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <span className="sm:hidden h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center flex-shrink-0">4</span>
+              Cấu hình chứng thực
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1.5 mb-2.5 leading-relaxed">
+              Chọn kiểu <strong>"API Key"</strong> rồi dán key bên dưới:
+            </p>
 
-              {/* Webhook API Key */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Shield className="h-4 w-4" /> Webhook API Key
-                  {webhookApiKey ? (
-                    <Badge variant="outline" className="text-green-600 border-green-500/30 text-xs">Đã tạo</Badge>
-                  ) : (
-                    <Badge variant="destructive" className="text-xs">Chưa tạo</Badge>
-                  )}
-                </label>
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Input
-                      type={showApiKey ? "text" : "password"}
-                      value={webhookApiKey || "Nhấn 'Tạo API Key' để bắt đầu"}
-                      readOnly
-                      className="pr-10 font-mono text-sm bg-muted"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                    >
-                      {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => webhookApiKey && copyToClipboard(webhookApiKey, "API Key")}
-                    disabled={!webhookApiKey}
-                  >
-                    {copied === "API Key" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={generateNewApiKey}
-                    disabled={isLoading}
-                    className="gap-1"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span className="hidden sm:inline">{webhookApiKey ? "Tạo lại" : "Tạo API Key"}</span>
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Dán API Key này vào mục "API Key" trong cấu hình chứng thực SePay. Content-Type chọn <code>application/json</code>.
-                </p>
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5 text-primary" /> Webhook API Key
+              </span>
+              {webhookApiKey ? (
+                <Badge variant="outline" className="text-emerald-600 border-emerald-500/30 text-[10px] h-5">Đã tạo</Badge>
+              ) : (
+                <Badge variant="destructive" className="text-[10px] h-5">Chưa tạo</Badge>
+              )}
             </div>
+
+            <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-1.5">
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={webhookApiKey || "Chưa có key"}
+                readOnly
+                className="flex-1 min-w-0 bg-transparent text-[11px] sm:text-xs font-mono px-2 outline-none text-foreground"
+              />
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => setShowApiKey(!showApiKey)}>
+                {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+              <Button
+                type="button" variant="secondary" size="icon" className="h-8 w-8 flex-shrink-0"
+                onClick={() => webhookApiKey && copyToClipboard(webhookApiKey, "API Key")}
+                disabled={!webhookApiKey}
+              >
+                {copied === "API Key" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <Button
+              type="button" variant="outline" size="sm"
+              onClick={generateNewApiKey} disabled={isLoading}
+              className="mt-2 w-full gap-1.5 h-9"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+              {webhookApiKey ? "Tạo lại API Key" : "Tạo API Key"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+              Content-Type chọn <code className="text-[10px] bg-muted px-1 py-0.5 rounded">application/json</code>.
+            </p>
           </div>
 
           {/* Step 5 */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-primary text-primary-foreground rounded-full w-7 h-7 flex items-center justify-center p-0">5</Badge>
-              <h3 className="font-semibold">Nhấn "Thêm" để hoàn tất</h3>
-            </div>
-            <p className="text-sm text-muted-foreground ml-9">
-              Sau khi thêm, bạn có thể kiểm tra bằng cách chuyển khoản thử hoặc sử dụng tính năng{" "}
-              <a href="https://my.sepay.vn/transactions" target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1">
+          <div className="relative rounded-xl border bg-card/40 p-3.5 sm:pl-12">
+            <span className="hidden sm:flex absolute left-3.5 top-3.5 h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold items-center justify-center">5</span>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <span className="sm:hidden h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center flex-shrink-0">5</span>
+              Hoàn tất
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+              Nhấn <strong>"Thêm"</strong>, sau đó kiểm tra bằng chuyển khoản thử hoặc{" "}
+              <a href="https://my.sepay.vn/transactions" target="_blank" rel="noopener noreferrer" className="text-primary font-medium underline-offset-2 hover:underline inline-flex items-center gap-1">
                 Giả lập giao dịch <ExternalLink className="h-3 w-3" />
-              </a>{" "}
-              (nếu dùng tài khoản Demo)
+              </a>
             </p>
           </div>
 
           {/* SePay Payload Reference */}
-          <div className="p-4 bg-muted rounded-lg">
-            <p className="text-sm font-medium mb-2">📦 Dữ liệu SePay gửi qua webhook:</p>
-            <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="payload-ref" className="border rounded-xl bg-muted/30 px-3.5">
+              <AccordionTrigger className="text-xs font-medium py-3 hover:no-underline">
+                <span className="flex items-center gap-2"><FileJson className="h-4 w-4 text-primary" /> Dữ liệu SePay gửi qua webhook</span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <pre className="text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap font-mono rounded-lg bg-background/60 p-3">
 {JSON.stringify({
   id: 92704,
   gateway: "Vietcombank",
   transactionDate: "2023-03-25 14:02:37",
-  accountNumber: "0123499999",
-  code: null,
   content: "chuyen tien mua iphone PG-ABC123",
   transferType: "in",
   transferAmount: 2277000,
-  accumulated: 19077000,
-  subAccount: null,
   referenceCode: "MBVCB.3278907687",
-  description: "",
 }, null, 2)}
-            </pre>
-          </div>
+                </pre>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm space-y-1">
-                <p className="font-medium">Lưu ý quan trọng</p>
-                <ul className="text-muted-foreground space-y-1 list-disc pl-4">
-                  <li>Nội dung chuyển khoản phải chứa mã thanh toán (VD: <code>PG-ABC123</code>) để hệ thống tự động nhận diện</li>
-                  <li>SePay sẽ retry tối đa 7 lần nếu webhook thất bại</li>
-                  <li>Hệ thống tự động chống trùng lặp giao dịch</li>
-                </ul>
-              </div>
+          <div className="flex items-start gap-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 p-3.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1.5">
+              <p className="font-semibold text-foreground">Lưu ý quan trọng</p>
+              <ul className="text-muted-foreground space-y-1 list-disc pl-4 leading-relaxed">
+                <li>Nội dung CK phải chứa mã thanh toán (VD: <code className="text-[10px] bg-muted px-1 rounded">PG-ABC123</code>)</li>
+                <li>SePay retry tối đa 7 lần nếu webhook thất bại</li>
+                <li>Hệ thống tự động chống trùng lặp giao dịch</li>
+              </ul>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Merchant's own webhook (for forwarding to their system) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link2 className="h-5 w-5" />
-            Webhook đến hệ thống của bạn (tùy chọn)
+      <Card className="rounded-2xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-base md:text-lg">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Link2 className="h-4 w-4 text-primary" />
+            </div>
+            Webhook đến hệ thống của bạn
           </CardTitle>
-          <CardDescription>
-            Nhận thông báo realtime khi có giao dịch thành công — chuyển tiếp đến server của bạn
+          <CardDescription className="text-xs md:text-sm">
+            Tùy chọn — nhận thông báo realtime, chuyển tiếp đến server của bạn
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -451,10 +430,15 @@ const WebhookSettings = () => {
       </Card>
 
       {/* Integration docs for merchant's own webhook */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tài liệu tích hợp webhook</CardTitle>
-          <CardDescription>Xử lý webhook từ PayGate trên server của bạn</CardDescription>
+      <Card className="rounded-2xl">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-base md:text-lg">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <FileJson className="h-4 w-4 text-primary" />
+            </div>
+            Tài liệu tích hợp webhook
+          </CardTitle>
+          <CardDescription className="text-xs md:text-sm">Xử lý webhook từ PayGate trên server của bạn</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible className="w-full">
