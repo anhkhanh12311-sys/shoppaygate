@@ -218,6 +218,23 @@ const TransactionHistory = () => {
           <DataPagination page={page} totalPages={totalPages} totalCount={totalCount} pageSize={pageSize} onPageChange={setPage} />
         </CardContent>
       </Card>
+
+      {shareTx && settings && (
+        <ShareReceiptModal
+          open={!!shareTx}
+          onOpenChange={(v) => !v && setShareTx(null)}
+          settings={settings}
+          transaction={{
+            id: shareTx.id,
+            amount: shareTx.amount,
+            status: shareTx.status,
+            paid_at: shareTx.paid_at,
+            created_at: shareTx.created_at,
+            bank_reference: shareTx.bank_reference,
+            transfer_content: shareTx.transfer_content,
+          }}
+        />
+      )}
     </div>
   );
 };
