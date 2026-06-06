@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp, Clock, CheckCircle2, DollarSign, BarChart3,
+  TrendingUp, Clock, CheckCircle2, BarChart3,
   ArrowUpRight, ArrowDownRight, Percent, Link2, Zap, Wallet,
+  ArrowDownLeft, Trophy, Medal, Award,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useMerchant } from "@/hooks/useMerchant";
 import { useMerchantBanks } from "@/hooks/useMerchantBanks";
@@ -23,6 +23,35 @@ const formatCompact = (amount: number) => {
   if (amount >= 1e3) return `${(amount / 1e3).toFixed(0)}K`;
   return amount.toString();
 };
+
+// Trích xuất nhãn ngắn gọn, dễ đọc từ nội dung chuyển khoản thô
+const parseTxLabel = (raw: string | null, fallback: string | null) => {
+  const source = (raw || fallback || "").trim();
+  if (!source) return { title: "Giao dịch", code: "" };
+
+  // Lấy phần đầu có ý nghĩa: bỏ các chuỗi số/ngày/giờ và mã ngân hàng dài
+  const tokens = source.split(/\s+/);
+  // Mã link thanh toán thường có dạng PG... hoặc PGxxxxx
+  const codeToken = tokens.find((t) => /^PG/i.test(t.replace(/[-_]/g, "")));
+  // Token chữ đầu tiên (tên/loại giao dịch) - bỏ token chỉ toàn số
+  const nameToken = tokens.find((t) => /[a-zA-ZÀ-ỹ]/.test(t) && !/^PG/i.test(t));
+
+  let title = nameToken || codeToken || tokens[0] || "Giao dịch";
+  // Viết hoa đẹp hơn nếu là chữ thường liền
+  title = title.length > 18 ? `${title.slice(0, 18)}…` : title;
+
+  const code = codeToken && codeToken !== nameToken
+    ? (codeToken.length > 16 ? `${codeToken.slice(0, 16)}…` : codeToken)
+    : "";
+
+  return { title, code };
+};
+
+const rankStyles = [
+  { icon: Trophy, color: "text-amber-500", bg: "bg-amber-500/10" },
+  { icon: Medal, color: "text-slate-400", bg: "bg-slate-400/10" },
+  { icon: Award, color: "text-orange-500", bg: "bg-orange-500/10" },
+];
 
 const container = {
   hidden: {},
@@ -217,7 +246,7 @@ const DashboardOverview = () => {
 
       {/* Bottom grid */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border border-border/60 rounded-2xl">
+        <Card className="border border-border/60 rounded-2xl overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -225,31 +254,51 @@ const DashboardOverview = () => {
               </div>
               Top link thanh toán
             </CardTitle>
-            <CardDescription className="text-xs">Theo doanh thu cao nhất</CardDescription>
+            <CardDescription className="text-xs">Xếp hạng theo doanh thu cao nhất</CardDescription>
           </CardHeader>
           <CardContent>
             {advancedStats.topLinks.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Chưa có dữ liệu</p>
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                  <BarChart3 className="h-6 w-6 text-muted-foreground/50" />
+                </div>
+                <p className="text-sm text-muted-foreground">Chưa có dữ liệu</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {advancedStats.topLinks.map((link, i) => (
-                  <div key={link.code} className="flex items-center gap-3 group">
-                    <span className="text-xs font-bold text-muted-foreground w-5 text-center">{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-mono font-medium truncate group-hover:text-primary transition-colors">{link.code}</p>
-                      <p className="text-xs text-muted-foreground">{link.count} giao dịch</p>
+              <div className="space-y-2">
+                {advancedStats.topLinks.map((link, i) => {
+                  const rank = rankStyles[i];
+                  return (
+                    <div
+                      key={link.code}
+                      className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted/50"
+                    >
+                      {rank ? (
+                        <div className={`h-9 w-9 rounded-xl ${rank.bg} flex items-center justify-center flex-shrink-0`}>
+                          <rank.icon className={`h-4 w-4 ${rank.color}`} />
+                        </div>
+                      ) : (
+                        <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-muted-foreground">{i + 1}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{link.code}</p>
+                        <p className="text-xs text-muted-foreground">{link.count} giao dịch</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-bold text-primary">{formatCompact(link.total)}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">VND</p>
+                      </div>
                     </div>
-                    <Badge variant="outline" className="text-primary border-primary/20 font-bold">
-                      {formatCompact(link.total)}
-                    </Badge>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="border border-border/60 rounded-2xl">
+        <Card className="border border-border/60 rounded-2xl overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
@@ -261,22 +310,41 @@ const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             {advancedStats.recentTx.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Chưa có giao dịch</p>
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
+                  <ArrowDownLeft className="h-6 w-6 text-muted-foreground/50" />
+                </div>
+                <p className="text-sm text-muted-foreground">Chưa có giao dịch</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {advancedStats.recentTx.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between group">
-                    <div className="min-w-0">
-                      <p className="text-sm font-mono truncate group-hover:text-primary transition-colors">{tx.transfer_content || tx.bank_reference || "—"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tx.paid_at ? format(new Date(tx.paid_at), "dd/MM HH:mm", { locale: vi }) : "—"}
-                      </p>
+              <div className="space-y-1.5">
+                {advancedStats.recentTx.map((tx) => {
+                  const { title, code } = parseTxLabel(tx.transfer_content, tx.bank_reference);
+                  return (
+                    <div
+                      key={tx.id}
+                      className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                        <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{title}</p>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">
+                            {tx.paid_at ? format(new Date(tx.paid_at), "dd/MM • HH:mm", { locale: vi }) : "—"}
+                            {code ? ` · ${code}` : ""}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-bold text-emerald-600">+{formatCompact(tx.amount)}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">VND</p>
+                      </div>
                     </div>
-                    <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 ml-2 flex-shrink-0 font-bold">
-                      +{formatCompact(tx.amount)}
-                    </Badge>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
