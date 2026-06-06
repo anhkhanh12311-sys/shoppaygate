@@ -95,6 +95,34 @@ export const usePaginatedTransactions = () => {
     return () => { supabase.removeChannel(channel); };
   }, [merchant, page, filters, fetchPage]);
 
+  // Fetch ALL transactions matching current filters (for export). Capped for safety.
+  const fetchAllForExport = useCallback(async (max = 5000): Promise<Transaction[]> => {
+    if (!merchant) return [];
+    let query = supabase
+      .from("transactions")
+      .select("*")
+      .eq("merchant_id", merchant.id)
+      .order("created_at", { ascending: false })
+      .limit(max);
+
+    if (filters.status) {
+      query = query.eq("status", filters.status);
+    }
+    if (filters.search) {
+      query = query.or(`transfer_content.ilike.%${filters.search}%,bank_reference.ilike.%${filters.search}%`);
+    }
+    if (filters.dateFrom) {
+      query = query.gte("created_at", filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      query = query.lte("created_at", filters.dateTo + "T23:59:59");
+    }
+
+    const { data, error } = await query;
+    if (error) return [];
+    return (data as Transaction[]) || [];
+  }, [merchant, filters]);
+
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const updateFilters = useCallback((newFilters: Filters) => {
@@ -137,6 +165,7 @@ export const usePaginatedTransactions = () => {
     updateFilters,
     stats,
     refetch: () => fetchPage(page, filters),
+    fetchAllForExport,
     pageSize: PAGE_SIZE,
   };
 };
