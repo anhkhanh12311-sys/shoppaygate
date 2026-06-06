@@ -5,6 +5,7 @@ import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
+  Receipt, ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +30,8 @@ import AIInsights from "@/components/dashboard/AIInsights";
 import GatewayRental from "@/components/dashboard/GatewayRental";
 import TopupBalance from "@/components/dashboard/TopupBalance";
 import InstallPrompt from "@/components/InstallPrompt";
+import BrandedReceiptSettings from "@/components/dashboard/BrandedReceiptSettings";
+import BillHistory from "@/components/dashboard/BillHistory";
 
 const navSections = [
   {
