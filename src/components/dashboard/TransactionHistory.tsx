@@ -2,29 +2,67 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { History, CheckCircle2, Clock, XCircle, AlertCircle, Search, Filter, X, Share2 } from "lucide-react";
+import { History, CheckCircle2, Clock, XCircle, AlertCircle, Search, Filter, X, Share2, Download, FileSpreadsheet, FileText, FileDown, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { usePaginatedTransactions } from "@/hooks/usePaginatedTransactions";
 import DataPagination from "@/components/ui/data-pagination";
 import { ShareReceiptModal } from "@/components/receipt/ShareReceiptModal";
 import { useReceiptSettings } from "@/hooks/useReceiptSettings";
+import { useMerchant } from "@/hooks/useMerchant";
+import { exportToCSV, exportToExcel, exportToPDF } from "@/lib/exportTransactions";
+import { toast } from "sonner";
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 
 const TransactionHistory = () => {
-  const { transactions, loading, page, setPage, totalPages, totalCount, filters, updateFilters, stats, pageSize } = usePaginatedTransactions();
+  const { transactions, loading, page, setPage, totalPages, totalCount, filters, updateFilters, stats, pageSize, fetchAllForExport } = usePaginatedTransactions();
   const { settings } = useReceiptSettings();
+  const { merchant } = useMerchant();
   const [searchInput, setSearchInput] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [shareTx, setShareTx] = useState<any>(null);
+  const [exporting, setExporting] = useState<null | "csv" | "excel" | "pdf">(null);
+
+  const handleExport = async (type: "csv" | "excel" | "pdf") => {
+    if (exporting) return;
+    setExporting(type);
+    try {
+      const data = await fetchAllForExport();
+      if (data.length === 0) {
+        toast.error("Không có giao dịch để xuất");
+        return;
+      }
+      const rangeLabel =
+        filters.dateFrom || filters.dateTo
+          ? `${filters.dateFrom || "..."} → ${filters.dateTo || "..."}`
+          : "Tất cả";
+      if (type === "csv") {
+        exportToCSV(data);
+      } else if (type === "excel") {
+        await exportToExcel(data);
+      } else {
+        await exportToPDF(data, {
+          merchantName: merchant?.business_name,
+          rangeLabel,
+        });
+      }
+      toast.success(`Đã xuất ${data.length} giao dịch (${type.toUpperCase()})`);
+    } catch (err) {
+      console.error("[v0] export error:", err);
+      toast.error("Xuất dữ liệu thất bại, vui lòng thử lại");
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const handleSearch = () => {
     updateFilters({ ...filters, search: searchInput || undefined });
