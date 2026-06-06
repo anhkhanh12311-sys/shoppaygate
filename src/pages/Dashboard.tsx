@@ -290,6 +290,7 @@ const Dashboard = () => {
           ))}
         </main>
       </div>
+      <InstallPrompt />
     </div>
   );
 };
