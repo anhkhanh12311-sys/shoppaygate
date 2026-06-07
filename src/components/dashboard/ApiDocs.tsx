@@ -2,16 +2,15 @@ import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Book, Copy, Check, ShieldCheck, Webhook, Zap, Code2, KeyRound,
-  AlertTriangle, ListChecks, Server, Send, Play, Loader2, Sparkles,
-  Layers, Lock, Activity, FileJson, Globe, Terminal, ArrowRight,
+  AlertTriangle, ListChecks, Server, Send, Play, Loader2,
+  Lock, FileJson, Terminal, ArrowRight, Hash, ChevronRight,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useMerchant } from "@/hooks/useMerchant";
 import { useSystemSetting, ApiBrandingSetting } from "@/hooks/useSystemSettings";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,100 +19,126 @@ import { toast } from "sonner";
 const PROJECT_REF = "desgajgtdoxcgxlledww";
 const BASE_URL = `https://${PROJECT_REF}.functions.supabase.co`;
 
+/* ----------------------------- Copy helper ----------------------------- */
+const CopyBtn = ({ text, label }: { text: string; label?: string }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        toast.success("Đã copy");
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition shrink-0"
+    >
+      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+      {label}
+    </button>
+  );
+};
+
 /* ----------------------------- Code Block ----------------------------- */
 const CodeBlock = ({ children, lang }: { children: string; lang?: string }) => {
   const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(children);
-    setCopied(true);
-    toast.success("Đã copy");
-    setTimeout(() => setCopied(false), 1500);
-  };
   return (
-    <div className="relative group rounded-xl overflow-hidden border bg-[hsl(222_47%_8%)] text-slate-100">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
-          <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/80" />
-          <span className="h-2.5 w-2.5 rounded-full bg-green-400/80" />
-          {lang && <span className="ml-2 text-[10px] uppercase tracking-wider text-slate-400 font-mono">{lang}</span>}
-        </div>
-        <Button size="sm" variant="ghost" onClick={copy} className="h-7 px-2 text-slate-300 hover:text-white hover:bg-white/10">
-          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-          <span className="ml-1.5 text-xs">{copied ? "Copied" : "Copy"}</span>
-        </Button>
+    <div className="relative group rounded-lg overflow-hidden border border-white/5 bg-[hsl(222_47%_7%)] text-slate-100">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5">
+        {lang && <span className="text-[10px] uppercase tracking-wider text-slate-400 font-mono">{lang}</span>}
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText(children);
+            setCopied(true);
+            toast.success("Đã copy");
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          className="ml-auto inline-flex items-center gap-1 text-[10px] text-slate-400 hover:text-white transition"
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
       </div>
-      <pre className="p-4 overflow-x-auto text-xs leading-relaxed font-mono">
+      <pre className="p-3 overflow-x-auto text-[11.5px] leading-relaxed font-mono">
         <code>{children}</code>
       </pre>
     </div>
   );
 };
 
-/* ----------------------------- Endpoint Row ----------------------------- */
+/* ----------------------------- UI atoms ----------------------------- */
 const MethodBadge = ({ method }: { method: string }) => {
   const map: Record<string, string> = {
-    POST: "bg-blue-500/15 text-blue-500 border-blue-500/30",
-    GET: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
-    DELETE: "bg-rose-500/15 text-rose-500 border-rose-500/30",
-    PUT: "bg-orange-500/15 text-orange-500 border-orange-500/30",
+    POST: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    GET: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    DELETE: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+    PUT: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   };
-  return <Badge variant="outline" className={`font-mono text-[10px] px-2 ${map[method] ?? ""}`}>{method}</Badge>;
+  return (
+    <span className={`inline-flex items-center px-2 h-5 rounded font-mono text-[10px] font-semibold border ${map[method] ?? ""}`}>
+      {method}
+    </span>
+  );
 };
 
 const Endpoint = ({ method, path, desc, auth }: { method: string; path: string; desc: string; auth?: string }) => (
-  <div className="flex items-start gap-3 p-3 rounded-xl border bg-card/40 hover:bg-card/70 transition">
+  <div className="flex items-start gap-3 py-3 px-3 -mx-3 rounded-lg hover:bg-muted/40 transition">
     <MethodBadge method={method} />
     <div className="flex-1 min-w-0">
-      <code className="text-xs font-mono break-all">{path}</code>
-      <p className="text-xs text-muted-foreground mt-1">{desc}</p>
+      <code className="text-[12px] font-mono break-all text-foreground">{path}</code>
+      <p className="text-[11.5px] text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
     </div>
-    {auth && <Badge variant="secondary" className="text-[10px] gap-1"><Lock className="h-3 w-3" />{auth}</Badge>}
+    {auth && (
+      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground border rounded px-1.5 h-5 shrink-0">
+        <Lock className="h-2.5 w-2.5" />{auth}
+      </span>
+    )}
   </div>
 );
 
-/* ----------------------------- Field Row ----------------------------- */
 const Field = ({ name, type, required, desc }: { name: string; type: string; required?: boolean; desc: string }) => (
-  <div className="grid grid-cols-[minmax(120px,auto)_1fr] md:grid-cols-[160px_120px_1fr] gap-2 md:gap-4 py-2.5 border-b last:border-0 border-border/60 text-xs">
-    <div className="flex items-center gap-2">
-      <code className="font-mono font-semibold text-foreground">{name}</code>
-      {required && <span className="text-[9px] font-semibold uppercase text-rose-500">required</span>}
+  <div className="grid grid-cols-[1fr_auto] md:grid-cols-[180px_110px_1fr] gap-x-3 gap-y-1 py-2.5 border-b last:border-0 border-border/50">
+    <div className="flex items-center gap-1.5 min-w-0">
+      <code className="font-mono text-[12px] font-semibold text-foreground truncate">{name}</code>
+      {required && <span className="text-[9px] font-semibold uppercase text-rose-500 tracking-wide">req</span>}
     </div>
-    <code className="hidden md:block font-mono text-muted-foreground">{type}</code>
-    <span className="text-muted-foreground col-span-2 md:col-span-1">{desc}</span>
+    <code className="font-mono text-[11px] text-muted-foreground md:order-none order-3 col-span-2 md:col-span-1">{type}</code>
+    <span className="text-[11.5px] text-muted-foreground col-span-2 md:col-span-1 leading-relaxed">{desc}</span>
   </div>
 );
 
-/* ----------------------------- Section Anchor ----------------------------- */
-const Section = ({ id, icon: Icon, title, kicker, children }: { id: string; icon: any; title: string; kicker?: string; children: React.ReactNode }) => (
-  <section id={id} className="scroll-mt-24 space-y-4">
-    <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-        <Icon className="h-5 w-5 text-primary" />
-      </div>
-      <div>
-        {kicker && <p className="text-[10px] uppercase tracking-widest text-primary font-semibold">{kicker}</p>}
-        <h3 className="text-xl font-bold">{title}</h3>
-      </div>
+const SectionHeader = ({ id, num, title, desc }: { id: string; num: string; title: string; desc?: string }) => (
+  <div className="flex items-start gap-3 pb-3 mb-4 border-b">
+    <div className="font-mono text-[11px] text-muted-foreground tabular-nums mt-1">{num}</div>
+    <div className="flex-1 min-w-0">
+      <h2 className="text-lg md:text-xl font-bold tracking-tight flex items-center gap-2 group">
+        {title}
+        <a href={`#${id}`} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition">
+          <Hash className="h-4 w-4" />
+        </a>
+      </h2>
+      {desc && <p className="text-[12.5px] text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>}
     </div>
-    {children}
-  </section>
+  </div>
 );
 
-/* ----------------------------- Main Component ----------------------------- */
+/* ----------------------------- Nav ----------------------------- */
 const NAV = [
-  { id: "intro", label: "Giới thiệu", icon: Sparkles },
-  { id: "quickstart", label: "Quickstart", icon: Zap },
-  { id: "auth", label: "Xác thực", icon: KeyRound },
-  { id: "endpoints", label: "Endpoints", icon: Server },
-  { id: "callback", label: "Callback Event", icon: Webhook },
-  { id: "signature", label: "Chữ ký HMAC", icon: ShieldCheck },
-  { id: "examples", label: "Code mẫu", icon: Code2 },
-  { id: "tryit", label: "Test thử API", icon: Play },
-  { id: "errors", label: "Mã lỗi", icon: AlertTriangle },
-  { id: "checklist", label: "Go-live", icon: ListChecks },
+  { id: "intro",      num: "01", label: "Giới thiệu",       icon: Book },
+  { id: "credentials",num: "02", label: "Credentials",      icon: KeyRound },
+  { id: "quickstart", num: "03", label: "Quickstart",       icon: Zap },
+  { id: "auth",       num: "04", label: "Xác thực",         icon: Lock },
+  { id: "endpoints",  num: "05", label: "Endpoints",        icon: Server },
+  { id: "callback",   num: "06", label: "Callback payload", icon: Webhook },
+  { id: "signature",  num: "07", label: "HMAC signature",   icon: ShieldCheck },
+  { id: "examples",   num: "08", label: "Code mẫu",         icon: Code2 },
+  { id: "tryit",      num: "09", label: "Test API",         icon: Play },
+  { id: "errors",     num: "10", label: "Mã lỗi",           icon: AlertTriangle },
+  { id: "checklist",  num: "11", label: "Go-live",          icon: ListChecks },
 ];
 
+/* ============================ MAIN ============================ */
 const ApiDocs = () => {
   const { merchant } = useMerchant();
   const { value: brand } = useSystemSetting<ApiBrandingSetting>("api_branding");
@@ -125,7 +150,6 @@ const ApiDocs = () => {
   const webhookIngest = `${BASE_URL}/sepay-webhook?merchant_id=${merchantId}`;
   const callbackTestUrl = `${BASE_URL}/send-topup-callback`;
 
-  // --- Active section tracking ---
   const [active, setActive] = useState("intro");
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -133,13 +157,13 @@ const ApiDocs = () => {
         const visible = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         if (visible[0]) setActive(visible[0].target.id);
       },
-      { rootMargin: "-30% 0px -55% 0px", threshold: [0, 0.5, 1] }
+      { rootMargin: "-25% 0px -60% 0px", threshold: [0, 0.5, 1] }
     );
     NAV.forEach(n => { const el = document.getElementById(n.id); if (el) obs.observe(el); });
     return () => obs.disconnect();
   }, []);
 
-  // --- Try It state ---
+  /* Try It */
   const [testCustomer, setTestCustomer] = useState("USER_001");
   const [testAmount, setTestAmount] = useState("50000");
   const [testing, setTesting] = useState(false);
@@ -167,7 +191,6 @@ const ApiDocs = () => {
     setTesting(false);
   };
 
-  /* ----------------------------- Code samples ----------------------------- */
   const samplePayload = `{
   "event": "topup.success",
   "customer_ref": "USER_123",
@@ -179,8 +202,7 @@ const ApiDocs = () => {
   "timestamp": "2026-05-08T12:00:00.000Z"
 }`;
 
-  const codeNode = useMemo(() => `// Express — receiver chuẩn cho ${brandName}
-import express from "express";
+  const codeNode = useMemo(() => `import express from "express";
 import crypto from "crypto";
 
 const app = express();
@@ -189,7 +211,6 @@ app.use(express.json({ verify: (req, _, buf) => { (req as any).rawBody = buf; } 
 const SECRET = process.env.${brandKey}_SECRET!;
 
 app.post("/${brandName.toLowerCase()}/topup", (req, res) => {
-  // 1) Verify HMAC-SHA256 trên RAW body
   const raw = (req as any).rawBody.toString("utf8");
   const expected = crypto.createHmac("sha256", SECRET).update(raw).digest("hex");
   if (req.headers["x-paygate-signature"] !== expected) {
@@ -197,35 +218,30 @@ app.post("/${brandName.toLowerCase()}/topup", (req, res) => {
   }
 
   const { event, customer_ref, amount, transaction_id } = req.body;
-  if (event !== "topup.success") return res.status(200).json({ ok: true, ignored: true });
+  if (event !== "topup.success") return res.status(200).json({ ok: true });
 
-  // 2) Idempotent: INSERT ON CONFLICT (transaction_id) DO NOTHING
-  //    UPDATE wallets SET balance = balance + $amount WHERE user_id = $customer_ref;
+  // Idempotent credit by transaction_id
+  // INSERT ... ON CONFLICT (transaction_id) DO NOTHING
 
   return res.status(200).json({ ok: true });
-});
-
-app.listen(3000);`, [brandName, brandKey]);
+});`, [brandName, brandKey]);
 
   const codePhp = useMemo(() => `<?php
-// ${brandName} receiver
 $secret = getenv('${brandKey}_SECRET');
 $raw = file_get_contents('php://input');
 $sig = $_SERVER['HTTP_X_PAYGATE_SIGNATURE'] ?? '';
 
 if (!hash_equals(hash_hmac('sha256', $raw, $secret), $sig)) {
-  http_response_code(401);
-  echo json_encode(['ok' => false, 'error' => 'invalid_signature']); exit;
+  http_response_code(401); exit;
 }
 
 $p = json_decode($raw, true);
-if (($p['event'] ?? '') !== 'topup.success') { echo json_encode(['ok' => true]); exit; }
+if (($p['event'] ?? '') !== 'topup.success') { echo '{"ok":true}'; exit; }
 
-// TODO: cộng tiền idempotent theo $p['transaction_id']
-echo json_encode(['ok' => true]);`, [brandName, brandKey]);
+// TODO: idempotent credit by $p['transaction_id']
+echo '{"ok":true}';`, [brandKey]);
 
-  const codePython = useMemo(() => `# FastAPI — ${brandName} receiver
-from fastapi import FastAPI, Request, HTTPException
+  const codePython = useMemo(() => `from fastapi import FastAPI, Request, HTTPException
 import hmac, hashlib, os
 
 app = FastAPI()
@@ -240,15 +256,14 @@ async def topup(req: Request):
         raise HTTPException(401, "invalid_signature")
     p = await req.json()
     if p.get("event") != "topup.success":
-        return {"ok": True, "ignored": True}
+        return {"ok": True}
     # idempotent credit by p["transaction_id"]
     return {"ok": True}`, [brandName, brandKey]);
 
-  const codeGo = useMemo(() => `// Go — ${brandName} receiver
-package main
+  const codeGo = useMemo(() => `package main
 
 import (
-  "crypto/hmac"; "crypto/sha256"; "encoding/hex"; "encoding/json"
+  "crypto/hmac"; "crypto/sha256"; "encoding/hex"
   "io"; "net/http"; "os"
 )
 
@@ -260,372 +275,349 @@ func handler(w http.ResponseWriter, r *http.Request) {
   if r.Header.Get("X-PayGate-Signature") != hex.EncodeToString(mac.Sum(nil)) {
     http.Error(w, "invalid_signature", 401); return
   }
-  var p map[string]any; json.Unmarshal(body, &p)
-  // idempotent credit by p["transaction_id"]
-  json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+  w.Write([]byte(\`{"ok":true}\`))
 }`, [brandKey]);
 
   const codeCurl = `curl -X POST ${callbackTestUrl} \\
-  -H "Authorization: Bearer <YOUR_SUPABASE_JWT>" \\
+  -H "Authorization: Bearer <YOUR_JWT>" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "test": true,
-    "customer_ref": "USER_001",
-    "amount": 50000
-  }'`;
+  -d '{"test":true,"customer_ref":"USER_001","amount":50000}'`;
 
   /* ============================ RENDER ============================ */
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      {/* HERO */}
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-purple-500/5 to-background p-6 md:p-8 mb-6">
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl" />
-        <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-primary/15 text-primary border-primary/30 hover:bg-primary/15">
-                <Sparkles className="h-3 w-3 mr-1" /> API {apiVersion}
-              </Badge>
-              <Badge variant="outline" className="gap-1"><Activity className="h-3 w-3 text-emerald-500" /> Operational</Badge>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-              {brandName} Developer Docs
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-xl text-sm md:text-base">
-              Tích hợp cổng nạp tiền tự động vào website của bạn trong <strong>&lt;10 phút</strong>.
-              Webhook ký HMAC-SHA256, idempotent, retry-safe, sẵn sàng production.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Badge variant="outline" className="gap-1"><ShieldCheck className="h-3 w-3" /> HMAC-SHA256</Badge>
-              <Badge variant="outline" className="gap-1"><Zap className="h-3 w-3" /> Realtime &lt;3s</Badge>
-              <Badge variant="outline" className="gap-1"><Layers className="h-3 w-3" /> Idempotent</Badge>
-              <Badge variant="outline" className="gap-1"><Globe className="h-3 w-3" /> REST + JSON</Badge>
-            </div>
+      {/* COMPACT HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6 pb-5 border-b">
+        <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">API Reference</span>
+            <Badge variant="outline" className="font-mono text-[10px] h-5 px-1.5">{apiVersion}</Badge>
+            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Operational
+            </span>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => document.getElementById("quickstart")?.scrollIntoView({ behavior: "smooth" })}>
-              Bắt đầu nhanh <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-            <Button size="sm" onClick={() => document.getElementById("tryit")?.scrollIntoView({ behavior: "smooth" })}>
-              <Play className="h-4 w-4 mr-1" /> Test ngay
-            </Button>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{brandName} Developer Docs</h1>
+          <p className="text-[13px] text-muted-foreground mt-1 max-w-2xl">
+            Cổng nạp tiền tự động qua QR · Webhook ký HMAC-SHA256 · Idempotent · Production-ready trong &lt;10 phút.
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Button size="sm" variant="outline" onClick={() => document.getElementById("quickstart")?.scrollIntoView({ behavior: "smooth" })}>
+            Quickstart <ArrowRight className="h-3.5 w-3.5 ml-1" />
+          </Button>
+          <Button size="sm" onClick={() => document.getElementById("tryit")?.scrollIntoView({ behavior: "smooth" })}>
+            <Play className="h-3.5 w-3.5 mr-1" /> Test
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-        {/* SIDEBAR NAV */}
+      <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-8">
+        {/* SIDEBAR */}
         <aside className="hidden lg:block">
-          <div className="sticky top-4 space-y-1">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-3 mb-2">Tài liệu</p>
+          <nav className="sticky top-4 space-y-0.5">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-2.5 mb-2">On this page</p>
             {NAV.map(n => (
               <a key={n.id} href={`#${n.id}`}
                 onClick={(e) => { e.preventDefault(); document.getElementById(n.id)?.scrollIntoView({ behavior: "smooth" }); }}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all
+                className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12.5px] transition-all border-l-2
                   ${active === n.id
-                    ? "bg-primary/10 text-primary font-semibold border border-primary/20"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
-                <n.icon className="h-3.5 w-3.5" /> {n.label}
+                    ? "border-primary text-primary bg-primary/5 font-medium"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+                <span className="font-mono text-[10px] tabular-nums opacity-70 w-5">{n.num}</span>
+                {n.label}
               </a>
             ))}
-          </div>
+          </nav>
         </aside>
 
         {/* CONTENT */}
-        <div className="space-y-12 min-w-0">
+        <div className="space-y-14 min-w-0">
 
-          {/* --- INTRO --- */}
-          <Section id="intro" icon={Book} title="Giới thiệu" kicker="01 · Overview">
-            <Card>
-              <CardContent className="pt-6 space-y-3 text-sm">
-                <p>
-                  {brandName} là cổng thanh toán QR + auto-bank cho phép website/hệ thống của bạn
-                  <strong> nhận tiền nạp từ user và tự động cộng số dư</strong> mà không cần thao tác thủ công.
-                </p>
-                <div className="grid sm:grid-cols-3 gap-3 mt-4">
-                  {[
-                    { icon: Zap, t: "Realtime", d: "Biến động số dư trong 1–3 giây" },
-                    { icon: ShieldCheck, t: "HMAC-SHA256", d: "Mọi callback đều được ký" },
-                    { icon: Layers, t: "Idempotent", d: "Chống double-credit bằng transaction_id" },
-                  ].map((b, i) => (
-                    <div key={i} className="p-4 rounded-xl border bg-card/40">
-                      <b.icon className="h-5 w-5 text-primary mb-2" />
-                      <p className="font-semibold text-sm">{b.t}</p>
-                      <p className="text-xs text-muted-foreground">{b.d}</p>
+          {/* INTRO */}
+          <section id="intro" className="scroll-mt-6">
+            <SectionHeader id="intro" num="01" title="Giới thiệu" desc={`${brandName} cho phép website nhận tiền nạp từ user qua QR ngân hàng và tự động cộng số dư qua webhook.`} />
+            <div className="grid sm:grid-cols-3 gap-3">
+              {[
+                { icon: Zap, t: "Realtime", d: "Cộng tiền trong 1–3 giây" },
+                { icon: ShieldCheck, t: "HMAC-SHA256", d: "Mọi callback đều được ký số" },
+                { icon: Hash, t: "Idempotent", d: "Chống double-credit qua transaction_id" },
+              ].map((b, i) => (
+                <div key={i} className="p-4 rounded-lg border bg-muted/20">
+                  <b.icon className="h-4 w-4 text-primary mb-2" />
+                  <p className="font-semibold text-[13px]">{b.t}</p>
+                  <p className="text-[11.5px] text-muted-foreground mt-0.5">{b.d}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* CREDENTIALS */}
+          <section id="credentials" className="scroll-mt-6">
+            <SectionHeader id="credentials" num="02" title="Credentials" desc="Thông tin định danh của merchant. Giữ bí mật secret HMAC." />
+            <Card className="rounded-lg overflow-hidden">
+              <CardContent className="p-0 divide-y">
+                {[
+                  { k: "Merchant ID", v: merchantId },
+                  { k: "Base URL", v: BASE_URL },
+                  { k: "SePay Webhook In", v: webhookIngest },
+                  { k: "Callback Test URL", v: callbackTestUrl },
+                ].map((row) => (
+                  <div key={row.k} className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">{row.k}</p>
+                      <code className="text-[11.5px] font-mono break-all">{row.v}</code>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </Section>
-
-          {/* --- QUICKSTART --- */}
-          <Section id="quickstart" icon={Zap} title="Quickstart 4 bước" kicker="02 · 10 phút">
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <ol className="space-y-3 text-sm">
-                  {[
-                    ["Mua gói & cấu hình", "Vào tab Thuê Cổng → chọn gói → nhập Callback URL HTTPS + sinh Secret (≥32 ký tự)."],
-                    ["Hiển thị QR cho user", `Khi user nạp, dùng mã PG-XXXXXX [USER_REF] làm nội dung CK. Phần USER_REF chính là customer_ref.`],
-                    ["Chờ webhook", `${brandName} nhận tín hiệu SePay, đối soát, ký HMAC và POST tới Callback URL của bạn.`],
-                    ["Verify & cộng tiền", "Verify chữ ký, cộng tiền idempotent theo transaction_id, trả HTTP 200."],
-                  ].map(([t, d], i) => (
-                    <li key={i} className="flex gap-3">
-                      <div className="h-7 w-7 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">{i + 1}</div>
-                      <div>
-                        <p className="font-semibold">{t}</p>
-                        <p className="text-muted-foreground text-xs mt-0.5">{d}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-                <div className="mt-4 p-4 rounded-xl bg-muted/50 border border-dashed text-xs font-mono overflow-x-auto">
-                  User → Bank App → SePay → {brandName} → [HMAC-Signed POST] → Your Server → Wallet++
-                </div>
-              </CardContent>
-            </Card>
-          </Section>
-
-          {/* --- AUTH --- */}
-          <Section id="auth" icon={KeyRound} title="Xác thực & môi trường" kicker="03 · Auth">
-            <Card>
-              <CardContent className="pt-6 space-y-3 text-sm">
-                <p>Hệ thống dùng <strong>2 cơ chế</strong> tách biệt:</p>
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div className="p-4 rounded-xl border bg-card/40">
-                    <p className="font-semibold flex items-center gap-2"><Lock className="h-4 w-4 text-primary" /> Inbound (SePay → {brandName})</p>
-                    <p className="text-xs text-muted-foreground mt-1">SePay gửi header <code className="text-[10px]">Apikey &lt;webhook_api_key&gt;</code>. Sinh trong tab Cài đặt → API.</p>
+                    <CopyBtn text={row.v} />
                   </div>
-                  <div className="p-4 rounded-xl border bg-card/40">
-                    <p className="font-semibold flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> Outbound ({brandName} → bạn)</p>
-                    <p className="text-xs text-muted-foreground mt-1">Mỗi payload được ký <code className="text-[10px]">HMAC-SHA256(body, topup_secret)</code>, gắn vào <code className="text-[10px]">X-PayGate-Signature</code>.</p>
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* QUICKSTART */}
+          <section id="quickstart" className="scroll-mt-6">
+            <SectionHeader id="quickstart" num="03" title="Quickstart" desc="4 bước để go-live, mất khoảng 10 phút." />
+            <ol className="space-y-3">
+              {[
+                ["Mua gói & cấu hình", "Vào tab Thuê Cổng → chọn gói → nhập Callback URL HTTPS + sinh Secret ≥32 ký tự."],
+                ["Hiển thị QR cho user", `Khi user nạp, dùng nội dung CK dạng PG-XXXXXX [USER_REF]. Phần USER_REF chính là customer_ref trả về callback.`],
+                ["Chờ webhook", `${brandName} nhận tín hiệu SePay, đối soát, ký HMAC và POST tới Callback URL của bạn.`],
+                ["Verify & cộng tiền", "Verify chữ ký bằng raw body, cộng tiền idempotent theo transaction_id, trả HTTP 200."],
+              ].map(([t, d], i) => (
+                <li key={i} className="flex gap-3 p-3 rounded-lg border bg-muted/10">
+                  <div className="h-6 w-6 shrink-0 rounded-md bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold tabular-nums">{i + 1}</div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[13px]">{t}</p>
+                    <p className="text-muted-foreground text-[11.5px] mt-0.5">{d}</p>
                   </div>
-                </div>
+                </li>
+              ))}
+            </ol>
+          </section>
 
-                <div className="mt-4 grid sm:grid-cols-2 gap-2 text-xs">
-                  <div className="p-3 rounded-lg bg-muted/50 flex justify-between"><span className="text-muted-foreground">Merchant ID</span><code className="font-mono">{merchantId}</code></div>
-                  <div className="p-3 rounded-lg bg-muted/50 flex justify-between"><span className="text-muted-foreground">Base URL</span><code className="font-mono text-[10px]">{BASE_URL}</code></div>
-                  <div className="p-3 rounded-lg bg-muted/50 flex justify-between sm:col-span-2"><span className="text-muted-foreground">SePay Webhook URL</span><code className="font-mono text-[10px] truncate ml-2 max-w-[60%]">{webhookIngest}</code></div>
-                </div>
-              </CardContent>
-            </Card>
-          </Section>
-
-          {/* --- ENDPOINTS --- */}
-          <Section id="endpoints" icon={Server} title="Endpoints" kicker="04 · REST">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Base URL</CardTitle>
-                <CardDescription><code>{BASE_URL}</code></CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Endpoint method="POST" path={`/sepay-webhook?merchant_id=${merchantId}`}
-                  desc="Ingest từ SePay. Bạn KHÔNG gọi endpoint này — chỉ cấu hình URL này bên SePay." auth="Apikey" />
-                <Endpoint method="POST" path="/send-topup-callback"
-                  desc="Trigger gửi callback test tới Callback URL của bạn. Dùng để verify tích hợp." auth="JWT" />
-                <Endpoint method="POST" path="<YOUR_CALLBACK_URL>"
-                  desc="Endpoint TRÊN hệ thống của bạn. Nhận event topup.success, verify HMAC, cộng tiền." auth="HMAC" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-base">Headers chuẩn (outbound từ {brandName})</CardTitle></CardHeader>
-              <CardContent className="space-y-2 text-xs">
-                <Field name="Content-Type" type="string" required desc="application/json" />
-                <Field name="X-PayGate-Event" type="string" required desc='Tên sự kiện, hiện tại: "topup.success" hoặc "topup.test".' />
-                <Field name="X-PayGate-Signature" type="string" required desc="hex(HMAC_SHA256(raw_body, topup_secret))" />
-              </CardContent>
-            </Card>
-          </Section>
-
-          {/* --- CALLBACK --- */}
-          <Section id="callback" icon={Webhook} title="Callback event payload" kicker="05 · Schema">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2"><FileJson className="h-4 w-4" /> <code>topup.success</code></CardTitle>
-                <CardDescription>JSON {brandName} POST tới Callback URL của bạn khi user nạp tiền thành công.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <CodeBlock lang="json">{samplePayload}</CodeBlock>
-                <div className="rounded-xl border divide-y divide-border/60">
-                  <div className="hidden md:grid grid-cols-[160px_120px_1fr] gap-4 px-3 py-2 bg-muted/40 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
-                    <span>Field</span><span>Type</span><span>Description</span>
-                  </div>
-                  <div className="px-3">
-                    <Field name="event" type="string" required desc='"topup.success" cho giao dịch thật, "topup.test" cho test.' />
-                    <Field name="customer_ref" type="string|null" desc="ID user trên hệ thống bạn — phần sau mã PG- trong nội dung CK." />
-                    <Field name="amount" type="number" required desc="Số tiền nhận được (VND, đơn vị đồng)." />
-                    <Field name="transaction_id" type="uuid" required desc="ID giao dịch trên PayGate. DÙNG LÀM IDEMPOTENCY KEY." />
-                    <Field name="payment_code" type="string" desc="Mã link thanh toán PG-XXXXX." />
-                    <Field name="merchant_id" type="uuid" required desc="ID merchant nhận tiền." />
-                    <Field name="bank_reference" type="string" desc="Mã giao dịch ngân hàng (FT...)." />
-                    <Field name="timestamp" type="ISO8601" required desc="Thời điểm giao dịch UTC." />
-                  </div>
-                </div>
-
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Retry policy</AlertTitle>
-                  <AlertDescription className="text-xs">
-                    Trả <Badge variant="outline">2xx</Badge> trong ≤10s. Mọi response khác bị mark <code>failed</code> và lưu vào tab Nhật ký.
-                    PayGate <strong>không auto-retry</strong> — nên bạn phải xử lý idempotent theo <code>transaction_id</code>.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          </Section>
-
-          {/* --- SIGNATURE --- */}
-          <Section id="signature" icon={ShieldCheck} title="Verify chữ ký HMAC-SHA256" kicker="06 · Security">
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <p className="text-sm">
-                  Công thức: <code className="bg-muted px-2 py-0.5 rounded">signature = hex(HMAC_SHA256(raw_body_string, topup_secret))</code>.
-                  Luôn dùng <strong>raw body string</strong> trước khi parse JSON — KHÔNG re-stringify object.
+          {/* AUTH */}
+          <section id="auth" className="scroll-mt-6">
+            <SectionHeader id="auth" num="04" title="Xác thực" desc="Hệ thống dùng 2 cơ chế tách biệt cho inbound và outbound." />
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="p-4 rounded-lg border bg-muted/10">
+                <p className="font-semibold flex items-center gap-2 text-[13px]">
+                  <Lock className="h-3.5 w-3.5 text-primary" /> Inbound · SePay → {brandName}
                 </p>
-                <Tabs defaultValue="js">
-                  <TabsList>
-                    <TabsTrigger value="js">Node.js</TabsTrigger>
-                    <TabsTrigger value="php">PHP</TabsTrigger>
-                    <TabsTrigger value="py">Python</TabsTrigger>
-                    <TabsTrigger value="go">Go</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="js"><CodeBlock lang="javascript">{`const expected = crypto.createHmac("sha256", SECRET).update(rawBody).digest("hex");
+                <p className="text-[11.5px] text-muted-foreground mt-1.5">
+                  Header <code className="text-[10.5px] bg-muted px-1 py-0.5 rounded">Apikey &lt;webhook_api_key&gt;</code>. Sinh trong Cài đặt → API.
+                </p>
+              </div>
+              <div className="p-4 rounded-lg border bg-muted/10">
+                <p className="font-semibold flex items-center gap-2 text-[13px]">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Outbound · {brandName} → bạn
+                </p>
+                <p className="text-[11.5px] text-muted-foreground mt-1.5">
+                  Payload ký <code className="text-[10.5px] bg-muted px-1 py-0.5 rounded">HMAC-SHA256(body, topup_secret)</code>, header <code className="text-[10.5px] bg-muted px-1 py-0.5 rounded">X-PayGate-Signature</code>.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ENDPOINTS */}
+          <section id="endpoints" className="scroll-mt-6">
+            <SectionHeader id="endpoints" num="05" title="Endpoints" desc="REST · JSON · 3 endpoint chính." />
+            <Card className="rounded-lg">
+              <CardContent className="p-3 divide-y divide-border/50">
+                <Endpoint method="POST" path={`/sepay-webhook?merchant_id=${merchantId}`}
+                  desc="Ingest từ SePay. Bạn không gọi — chỉ cấu hình URL này bên SePay." auth="Apikey" />
+                <Endpoint method="POST" path="/send-topup-callback"
+                  desc="Trigger callback test tới Callback URL của bạn để verify tích hợp." auth="JWT" />
+                <Endpoint method="POST" path="<YOUR_CALLBACK_URL>"
+                  desc="Endpoint TRÊN hệ thống bạn. Nhận topup.success, verify HMAC, cộng tiền." auth="HMAC" />
+              </CardContent>
+            </Card>
+
+            <div className="mt-5">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Outbound headers</p>
+              <Card className="rounded-lg">
+                <CardContent className="px-4 py-1">
+                  <Field name="Content-Type" type="string" required desc="application/json" />
+                  <Field name="X-PayGate-Event" type="string" required desc='"topup.success" | "topup.test"' />
+                  <Field name="X-PayGate-Signature" type="string" required desc="hex(HMAC_SHA256(raw_body, topup_secret))" />
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* CALLBACK */}
+          <section id="callback" className="scroll-mt-6">
+            <SectionHeader id="callback" num="06" title="Callback payload" desc="JSON gửi tới Callback URL khi user nạp tiền thành công." />
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2 text-[12px]">
+                  <FileJson className="h-3.5 w-3.5 text-muted-foreground" />
+                  <code className="font-mono">topup.success</code>
+                </div>
+                <CodeBlock lang="json">{samplePayload}</CodeBlock>
+              </div>
+              <Card className="rounded-lg">
+                <CardContent className="px-4 py-1">
+                  <Field name="event" type="string" required desc='"topup.success" hoặc "topup.test"' />
+                  <Field name="customer_ref" type="string|null" desc="ID user trên hệ thống bạn." />
+                  <Field name="amount" type="number" required desc="VND, đơn vị đồng." />
+                  <Field name="transaction_id" type="uuid" required desc="DÙNG LÀM IDEMPOTENCY KEY." />
+                  <Field name="payment_code" type="string" desc="Mã link thanh toán PG-XXXXX." />
+                  <Field name="merchant_id" type="uuid" required desc="ID merchant nhận tiền." />
+                  <Field name="bank_reference" type="string" desc="Mã giao dịch ngân hàng." />
+                  <Field name="timestamp" type="ISO8601" required desc="Thời điểm giao dịch UTC." />
+                </CardContent>
+              </Card>
+            </div>
+            <div className="mt-4 flex items-start gap-2.5 p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 text-[12px]">
+              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-700 dark:text-amber-400">Retry policy</p>
+                <p className="text-muted-foreground mt-0.5">
+                  Trả <code className="bg-muted px-1 rounded">2xx</code> trong ≤10s. Response khác bị mark <code className="bg-muted px-1 rounded">failed</code>, lưu vào Nhật ký. <strong>Không auto-retry</strong> — xử lý idempotent theo <code className="bg-muted px-1 rounded">transaction_id</code>.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* SIGNATURE */}
+          <section id="signature" className="scroll-mt-6">
+            <SectionHeader id="signature" num="07" title="HMAC signature" desc="Verify chữ ký bằng raw body string, không re-stringify JSON." />
+            <div className="p-3 rounded-lg bg-muted/40 border text-[12px] mb-3">
+              <code>signature = hex(HMAC_SHA256(raw_body, topup_secret))</code>
+            </div>
+            <Tabs defaultValue="js">
+              <TabsList className="h-8">
+                <TabsTrigger value="js" className="text-[11.5px]">Node</TabsTrigger>
+                <TabsTrigger value="php" className="text-[11.5px]">PHP</TabsTrigger>
+                <TabsTrigger value="py" className="text-[11.5px]">Python</TabsTrigger>
+                <TabsTrigger value="go" className="text-[11.5px]">Go</TabsTrigger>
+              </TabsList>
+              <TabsContent value="js" className="mt-2"><CodeBlock lang="javascript">{`const expected = crypto.createHmac("sha256", SECRET).update(rawBody).digest("hex");
 if (req.headers["x-paygate-signature"] !== expected) return res.status(401).end();`}</CodeBlock></TabsContent>
-                  <TabsContent value="php"><CodeBlock lang="php">{`$expected = hash_hmac('sha256', file_get_contents('php://input'), $secret);
+              <TabsContent value="php" className="mt-2"><CodeBlock lang="php">{`$expected = hash_hmac('sha256', file_get_contents('php://input'), $secret);
 if (!hash_equals($expected, $_SERVER['HTTP_X_PAYGATE_SIGNATURE'])) http_response_code(401);`}</CodeBlock></TabsContent>
-                  <TabsContent value="py"><CodeBlock lang="python">{`import hmac, hashlib
+              <TabsContent value="py" className="mt-2"><CodeBlock lang="python">{`import hmac, hashlib
 expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
 assert hmac.compare_digest(expected, request.headers["X-PayGate-Signature"])`}</CodeBlock></TabsContent>
-                  <TabsContent value="go"><CodeBlock lang="go">{`mac := hmac.New(sha256.New, []byte(secret)); mac.Write(rawBody)
+              <TabsContent value="go" className="mt-2"><CodeBlock lang="go">{`mac := hmac.New(sha256.New, []byte(secret)); mac.Write(rawBody)
 if !hmac.Equal([]byte(r.Header.Get("X-PayGate-Signature")), []byte(hex.EncodeToString(mac.Sum(nil)))) {
   http.Error(w, "invalid_signature", 401); return
 }`}</CodeBlock></TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </Section>
-
-          {/* --- EXAMPLES --- */}
-          <Section id="examples" icon={Code2} title="Receiver hoàn chỉnh" kicker="07 · Code">
-            <Tabs defaultValue="node">
-              <TabsList className="grid grid-cols-5 w-full">
-                <TabsTrigger value="node">Node.js</TabsTrigger>
-                <TabsTrigger value="php">PHP</TabsTrigger>
-                <TabsTrigger value="py">Python</TabsTrigger>
-                <TabsTrigger value="go">Go</TabsTrigger>
-                <TabsTrigger value="curl">cURL</TabsTrigger>
-              </TabsList>
-              <TabsContent value="node" className="mt-3"><CodeBlock lang="typescript">{codeNode}</CodeBlock></TabsContent>
-              <TabsContent value="php" className="mt-3"><CodeBlock lang="php">{codePhp}</CodeBlock></TabsContent>
-              <TabsContent value="py" className="mt-3"><CodeBlock lang="python">{codePython}</CodeBlock></TabsContent>
-              <TabsContent value="go" className="mt-3"><CodeBlock lang="go">{codeGo}</CodeBlock></TabsContent>
-              <TabsContent value="curl" className="mt-3"><CodeBlock lang="bash">{codeCurl}</CodeBlock></TabsContent>
             </Tabs>
-          </Section>
+          </section>
 
-          {/* --- TRY IT --- */}
-          <Section id="tryit" icon={Play} title="Test thử API ngay" kicker="08 · Playground">
-            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Terminal className="h-4 w-4 text-primary" /> Gửi callback test tới hệ thống của bạn
-                </CardTitle>
-                <CardDescription>
-                  Sẽ POST một payload <code>topup.test</code> đã ký HMAC tới Callback URL bạn đã cấu hình.
-                  Kết quả lưu vào tab Nhật ký.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* EXAMPLES */}
+          <section id="examples" className="scroll-mt-6">
+            <SectionHeader id="examples" num="08" title="Code mẫu" desc="Receiver hoàn chỉnh, copy-paste là chạy." />
+            <Tabs defaultValue="node">
+              <TabsList className="grid grid-cols-5 w-full h-8">
+                <TabsTrigger value="node" className="text-[11.5px]">Node</TabsTrigger>
+                <TabsTrigger value="php" className="text-[11.5px]">PHP</TabsTrigger>
+                <TabsTrigger value="py" className="text-[11.5px]">Python</TabsTrigger>
+                <TabsTrigger value="go" className="text-[11.5px]">Go</TabsTrigger>
+                <TabsTrigger value="curl" className="text-[11.5px]">cURL</TabsTrigger>
+              </TabsList>
+              <TabsContent value="node" className="mt-2"><CodeBlock lang="typescript">{codeNode}</CodeBlock></TabsContent>
+              <TabsContent value="php" className="mt-2"><CodeBlock lang="php">{codePhp}</CodeBlock></TabsContent>
+              <TabsContent value="py" className="mt-2"><CodeBlock lang="python">{codePython}</CodeBlock></TabsContent>
+              <TabsContent value="go" className="mt-2"><CodeBlock lang="go">{codeGo}</CodeBlock></TabsContent>
+              <TabsContent value="curl" className="mt-2"><CodeBlock lang="bash">{codeCurl}</CodeBlock></TabsContent>
+            </Tabs>
+          </section>
+
+          {/* TRY IT */}
+          <section id="tryit" className="scroll-mt-6">
+            <SectionHeader id="tryit" num="09" title="Test API" desc="Gửi callback ký HMAC tới Callback URL bạn đã cấu hình." />
+            <Card className="rounded-lg border-primary/20 bg-gradient-to-br from-primary/[0.03] to-transparent">
+              <CardContent className="p-4 space-y-3">
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">customer_ref</Label>
-                    <Input value={testCustomer} onChange={(e) => setTestCustomer(e.target.value)} placeholder="USER_001" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">customer_ref</Label>
+                    <Input value={testCustomer} onChange={(e) => setTestCustomer(e.target.value)} placeholder="USER_001" className="h-9 font-mono text-[12.5px]" />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">amount (VND)</Label>
-                    <Input type="number" value={testAmount} onChange={(e) => setTestAmount(e.target.value)} placeholder="50000" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">amount (VND)</Label>
+                    <Input type="number" value={testAmount} onChange={(e) => setTestAmount(e.target.value)} placeholder="50000" className="h-9 font-mono text-[12.5px]" />
                   </div>
                 </div>
 
-                <Button onClick={runTest} disabled={testing} className="w-full sm:w-auto">
-                  {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                <Button onClick={runTest} disabled={testing} size="sm" className="w-full sm:w-auto">
+                  {testing ? <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-2" />}
                   Gửi test callback
                 </Button>
 
                 {testResult && (
-                  <div className={`rounded-xl border p-4 space-y-2 ${testResult.ok ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
+                  <div className={`rounded-lg border p-3 space-y-2 ${testResult.ok ? "border-emerald-500/30 bg-emerald-500/5" : "border-rose-500/30 bg-rose-500/5"}`}>
                     <div className="flex items-center gap-2">
                       {testResult.ok
                         ? <Check className="h-4 w-4 text-emerald-500" />
                         : <AlertTriangle className="h-4 w-4 text-rose-500" />}
-                      <span className="font-semibold text-sm">
+                      <span className="font-semibold text-[13px]">
                         {testResult.ok ? "Thành công" : "Thất bại"}
                       </span>
                       {testResult.status !== undefined && (
-                        <Badge variant="outline" className="font-mono">HTTP {testResult.status}</Badge>
+                        <Badge variant="outline" className="font-mono text-[10px] h-5">HTTP {testResult.status}</Badge>
                       )}
                     </div>
-                    {testResult.error && <p className="text-xs text-rose-500">{testResult.error}</p>}
+                    {testResult.error && <p className="text-[11.5px] text-rose-500 font-mono">{testResult.error}</p>}
                     {testResult.body && (
-                      <pre className="text-[11px] bg-background/70 border rounded-lg p-3 overflow-x-auto max-h-48">{testResult.body}</pre>
+                      <pre className="text-[10.5px] bg-background/70 border rounded-md p-2.5 overflow-x-auto max-h-48 font-mono">{testResult.body}</pre>
                     )}
                   </div>
                 )}
 
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    Chưa cấu hình Callback URL? Vào tab <strong>Thuê Cổng</strong> để setup trước.
-                  </AlertDescription>
-                </Alert>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <ChevronRight className="h-3 w-3" />
+                  Chưa cấu hình Callback URL? Vào tab <strong>Thuê Cổng</strong>.
+                </p>
               </CardContent>
             </Card>
-          </Section>
+          </section>
 
-          {/* --- ERRORS --- */}
-          <Section id="errors" icon={AlertTriangle} title="Mã lỗi & HTTP codes" kicker="09 · Errors">
-            <Card>
-              <CardContent className="pt-6 space-y-2 text-xs">
-                <div className="rounded-xl border divide-y">
+          {/* ERRORS */}
+          <section id="errors" className="scroll-mt-6">
+            <SectionHeader id="errors" num="10" title="Mã lỗi" desc="HTTP codes trả về từ Callback URL được ghi nhận và lưu vào Nhật ký." />
+            <Card className="rounded-lg">
+              <CardContent className="p-0">
+                <div className="divide-y divide-border/50">
                   {[
                     ["200", "OK — callback giao thành công", "emerald"],
-                    ["400", "Bad request — payload sai format / thiếu trường", "orange"],
+                    ["400", "Bad request — payload sai format / thiếu trường", "amber"],
                     ["401", "Unauthorized — chữ ký HMAC sai hoặc thiếu", "rose"],
-                    ["403", "Forbidden — không có quyền (vd: test merchant khác)", "rose"],
-                    ["404", "Not found — merchant/callback chưa cấu hình", "orange"],
+                    ["403", "Forbidden — không có quyền", "rose"],
+                    ["404", "Not found — merchant/callback chưa cấu hình", "amber"],
                     ["409", "Conflict — duplicate transaction_id (idempotency hit)", "blue"],
-                    ["5xx", "Server error — endpoint bạn lỗi, sẽ ghi vào Nhật ký", "rose"],
+                    ["5xx", "Server error — endpoint bạn lỗi, ghi vào Nhật ký", "rose"],
                   ].map(([code, desc, color]) => (
-                    <div key={code} className="flex items-center gap-3 p-3">
-                      <Badge variant="outline" className={`font-mono w-14 justify-center text-${color}-500 border-${color}-500/40`}>{code}</Badge>
-                      <span className="text-muted-foreground">{desc}</span>
+                    <div key={code} className="flex items-center gap-3 px-4 py-2.5">
+                      <code className={`font-mono w-12 text-center font-bold text-[12px] text-${color}-500`}>{code}</code>
+                      <span className="text-[12px] text-muted-foreground">{desc}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          </Section>
+          </section>
 
-          {/* --- CHECKLIST --- */}
-          <Section id="checklist" icon={ListChecks} title="Production checklist" kicker="10 · Go-live">
-            <Card>
-              <CardContent className="pt-6">
-                <ul className="space-y-2.5 text-sm">
+          {/* CHECKLIST */}
+          <section id="checklist" className="scroll-mt-6">
+            <SectionHeader id="checklist" num="11" title="Go-live checklist" desc="Tick hết trước khi đẩy production." />
+            <Card className="rounded-lg">
+              <CardContent className="p-4">
+                <ul className="space-y-2">
                   {[
-                    "Đã mua gói (Starter/Pro/Business) phù hợp lưu lượng.",
+                    "Đã mua gói phù hợp lưu lượng (Starter / Pro / Business).",
                     "Callback URL là HTTPS công khai (không self-signed, không LAN/VPN).",
                     "Secret HMAC ngẫu nhiên ≥ 32 ký tự, lưu trong env var.",
                     "Verify chữ ký bằng raw body string — không stringify lại object.",
                     "Cộng tiền idempotent: UNIQUE constraint trên transaction_id.",
-                    "Đã chạy nút 'Test thử API' phía trên và nhận HTTP 200.",
+                    "Đã chạy nút Test API và nhận HTTP 200.",
                     "Đã nạp thật một số tiền nhỏ, đối soát ở tab Nhật ký.",
                     "Đã setup alert nếu callback failed > 1% trong 5 phút.",
                   ].map((t, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <div className="h-5 w-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="h-3 w-3 text-emerald-500" />
+                    <li key={i} className="flex items-start gap-2.5 text-[12.5px]">
+                      <div className="h-4 w-4 rounded bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <Check className="h-2.5 w-2.5 text-emerald-500" />
                       </div>
                       {t}
                     </li>
@@ -633,8 +625,12 @@ if !hmac.Equal([]byte(r.Header.Get("X-PayGate-Signature")), []byte(hex.EncodeToS
                 </ul>
               </CardContent>
             </Card>
-          </Section>
+          </section>
 
+          <div className="text-center py-6 text-[11px] text-muted-foreground border-t">
+            <Terminal className="h-3.5 w-3.5 inline mr-1 opacity-60" />
+            {brandName} API {apiVersion} · End of reference
+          </div>
         </div>
       </div>
     </motion.div>
