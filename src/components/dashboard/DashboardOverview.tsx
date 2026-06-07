@@ -247,16 +247,16 @@ const DashboardOverview = () => {
       {/* Bottom grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border border-border/60 rounded-2xl overflow-hidden">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-primary" />
               </div>
-              Top link thanh toán
+              Top link
             </CardTitle>
-            <CardDescription className="text-xs">Xếp hạng theo doanh thu cao nhất</CardDescription>
+            <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">Doanh thu</span>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {advancedStats.topLinks.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
@@ -265,14 +265,11 @@ const DashboardOverview = () => {
                 <p className="text-sm text-muted-foreground">Chưa có dữ liệu</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="divide-y divide-border/40">
                 {advancedStats.topLinks.map((link, i) => {
                   const rank = rankStyles[i];
                   return (
-                    <div
-                      key={link.code}
-                      className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted/50"
-                    >
+                    <div key={link.code} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
                       {rank ? (
                         <div className={`h-9 w-9 rounded-xl ${rank.bg} flex items-center justify-center flex-shrink-0`}>
                           <rank.icon className={`h-4 w-4 ${rank.color}`} />
@@ -283,13 +280,12 @@ const DashboardOverview = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{link.code}</p>
-                        <p className="text-xs text-muted-foreground">{link.count} giao dịch</p>
+                        <p className="text-sm font-semibold truncate font-mono">{link.code}</p>
+                        <p className="text-[11px] text-muted-foreground">{link.count} GD</p>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-primary">{formatCompact(link.total)}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">VND</p>
-                      </div>
+                      <p className="text-sm font-bold text-primary tabular-nums flex-shrink-0">
+                        {formatCompact(link.total)}
+                      </p>
                     </div>
                   );
                 })}
@@ -299,16 +295,16 @@ const DashboardOverview = () => {
         </Card>
 
         <Card className="border border-border/60 rounded-2xl overflow-hidden">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
               </div>
-              Giao dịch gần đây
+              Gần đây
             </CardTitle>
-            <CardDescription className="text-xs">5 giao dịch thành công mới nhất</CardDescription>
+            <span className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">5 mới nhất</span>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {advancedStats.recentTx.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center">
                 <div className="h-12 w-12 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
@@ -317,31 +313,25 @@ const DashboardOverview = () => {
                 <p className="text-sm text-muted-foreground">Chưa có giao dịch</p>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="divide-y divide-border/40">
                 {advancedStats.recentTx.map((tx) => {
-                  const { title, code } = parseTxLabel(tx.transfer_content, tx.bank_reference);
+                  const d = tx.paid_at ? new Date(tx.paid_at) : null;
+                  const time = d ? format(d, "HH:mm", { locale: vi }) : "—";
+                  const day = d ? format(d, "dd/MM", { locale: vi }) : "";
                   return (
-                    <div
-                      key={tx.id}
-                      className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-muted/50"
-                    >
+                    <div key={tx.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
                       <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
                         <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate">{title}</p>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">
-                            {tx.paid_at ? format(new Date(tx.paid_at), "dd/MM • HH:mm", { locale: vi }) : "—"}
-                            {code ? ` · ${code}` : ""}
-                          </span>
-                        </div>
+                        <p className="text-sm font-bold tabular-nums text-emerald-600">
+                          +{formatCompact(tx.amount)}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground tabular-nums">
+                          {time} <span className="opacity-60">· {day}</span>
+                        </p>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-emerald-600">+{formatCompact(tx.amount)}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">VND</p>
-                      </div>
+                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
                     </div>
                   );
                 })}
