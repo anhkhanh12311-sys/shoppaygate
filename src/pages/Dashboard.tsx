@@ -33,6 +33,8 @@ import InstallPrompt from "@/components/InstallPrompt";
 import BrandedReceiptSettings from "@/components/dashboard/BrandedReceiptSettings";
 import BillHistory from "@/components/dashboard/BillHistory";
 import CustomersCRM from "@/components/dashboard/CustomersCRM";
+import ProductsManagement from "@/components/dashboard/ProductsManagement";
+import OrdersManagement from "@/components/dashboard/OrdersManagement";
 
 const navSections = [
   {
