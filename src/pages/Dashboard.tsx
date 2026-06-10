@@ -5,7 +5,7 @@ import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
-  Receipt, ReceiptText, Contact,
+  Receipt, ReceiptText, Contact, Package, ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
