@@ -5,7 +5,7 @@ import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
-  Receipt, ReceiptText,
+  Receipt, ReceiptText, Contact,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,6 +32,7 @@ import TopupBalance from "@/components/dashboard/TopupBalance";
 import InstallPrompt from "@/components/InstallPrompt";
 import BrandedReceiptSettings from "@/components/dashboard/BrandedReceiptSettings";
 import BillHistory from "@/components/dashboard/BillHistory";
+import CustomersCRM from "@/components/dashboard/CustomersCRM";
 
 const navSections = [
   {
@@ -61,6 +62,7 @@ const navSections = [
     items: [
       { value: "store", label: "Cửa hàng", icon: Store },
       { value: "staff", label: "Nhân viên", icon: Users },
+      { value: "customers", label: "Khách hàng", icon: Contact },
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
       { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
       { value: "settings", label: "Ngân hàng", icon: Settings },
@@ -146,6 +148,7 @@ const Dashboard = () => {
     { key: "branded-receipt", component: <BrandedReceiptSettings /> },
     { key: "store", component: <StoreSettings /> },
     { key: "staff", component: <StaffManagement /> },
+    { key: "customers", component: <CustomersCRM /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
