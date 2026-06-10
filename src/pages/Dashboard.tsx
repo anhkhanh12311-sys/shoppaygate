@@ -63,6 +63,8 @@ const navSections = [
     label: "Quản lý",
     items: [
       { value: "store", label: "Cửa hàng", icon: Store },
+      { value: "products", label: "Sản phẩm", icon: Package },
+      { value: "orders", label: "Đơn hàng", icon: ShoppingBag },
       { value: "staff", label: "Nhân viên", icon: Users },
       { value: "customers", label: "Khách hàng", icon: Contact },
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
