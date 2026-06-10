@@ -5,7 +5,7 @@ import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
-  Receipt, ReceiptText, Contact,
+  Receipt, ReceiptText, Contact, Package, ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +33,8 @@ import InstallPrompt from "@/components/InstallPrompt";
 import BrandedReceiptSettings from "@/components/dashboard/BrandedReceiptSettings";
 import BillHistory from "@/components/dashboard/BillHistory";
 import CustomersCRM from "@/components/dashboard/CustomersCRM";
+import ProductsManagement from "@/components/dashboard/ProductsManagement";
+import OrdersManagement from "@/components/dashboard/OrdersManagement";
 
 const navSections = [
   {
@@ -61,6 +63,8 @@ const navSections = [
     label: "Quản lý",
     items: [
       { value: "store", label: "Cửa hàng", icon: Store },
+      { value: "products", label: "Sản phẩm", icon: Package },
+      { value: "orders", label: "Đơn hàng", icon: ShoppingBag },
       { value: "staff", label: "Nhân viên", icon: Users },
       { value: "customers", label: "Khách hàng", icon: Contact },
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
@@ -147,6 +151,8 @@ const Dashboard = () => {
     { key: "sepay-sync", component: <SepaySync /> },
     { key: "branded-receipt", component: <BrandedReceiptSettings /> },
     { key: "store", component: <StoreSettings /> },
+    { key: "products", component: <ProductsManagement /> },
+    { key: "orders", component: <OrdersManagement /> },
     { key: "staff", component: <StaffManagement /> },
     { key: "customers", component: <CustomersCRM /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },

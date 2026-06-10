@@ -481,6 +481,145 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          order_id: string
+          product_id: string | null
+          product_image: string | null
+          product_name: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total: number
+          order_id: string
+          product_id?: string | null
+          product_image?: string | null
+          product_name: string
+          quantity?: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          order_id?: string
+          product_id?: string | null
+          product_image?: string | null
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          channel: string | null
+          created_at: string
+          customer_address: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          discount: number
+          id: string
+          merchant_id: string
+          note: string | null
+          order_code: string | null
+          paid_at: string | null
+          payment_link_id: string | null
+          payment_method: string | null
+          shipping_fee: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount?: number
+          id?: string
+          merchant_id: string
+          note?: string | null
+          order_code?: string | null
+          paid_at?: string | null
+          payment_link_id?: string | null
+          payment_method?: string | null
+          shipping_fee?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount?: number
+          id?: string
+          merchant_id?: string
+          note?: string | null
+          order_code?: string | null
+          paid_at?: string | null
+          payment_link_id?: string | null
+          payment_method?: string | null
+          shipping_fee?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_payment_link_id_fkey"
+            columns: ["payment_link_id"]
+            isOneToOne: false
+            referencedRelation: "payment_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_links: {
         Row: {
           amount: number
@@ -575,6 +714,90 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          gallery: Json | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          merchant_id: string
+          name: string
+          price: number
+          sale_price: number | null
+          sku: string | null
+          slug: string | null
+          sold_count: number
+          sort_order: number
+          stock: number
+          unlimited_stock: boolean
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          gallery?: Json | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          merchant_id: string
+          name: string
+          price?: number
+          sale_price?: number | null
+          sku?: string | null
+          slug?: string | null
+          sold_count?: number
+          sort_order?: number
+          stock?: number
+          unlimited_stock?: boolean
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          gallery?: Json | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          merchant_id?: string
+          name?: string
+          price?: number
+          sale_price?: number | null
+          sku?: string | null
+          slug?: string | null
+          sold_count?: number
+          sort_order?: number
+          stock?: number
+          unlimited_stock?: boolean
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -1040,6 +1263,7 @@ export type Database = {
           tx_id: string
         }[]
       }
+      get_public_order: { Args: { p_order_id: string }; Returns: Json }
       get_public_payment_link: {
         Args: { p_code: string }
         Returns: {
@@ -1082,6 +1306,24 @@ export type Database = {
           website: string
         }[]
       }
+      get_public_store_products: {
+        Args: { p_slug: string }
+        Returns: {
+          category: string
+          description: string
+          id: string
+          image_url: string
+          is_featured: boolean
+          merchant_id: string
+          name: string
+          price: number
+          sale_price: number
+          sold_count: number
+          stock: number
+          unlimited_stock: boolean
+        }[]
+      }
+      get_store_stats: { Args: never; Returns: Json }
       get_top_merchants: {
         Args: { p_limit?: number }
         Returns: {
@@ -1099,6 +1341,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_product_view: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       insert_transaction_from_webhook: {
         Args: {
           p_amount: number
@@ -1112,6 +1358,19 @@ export type Database = {
         Returns: string
       }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
+      public_create_order: {
+        Args: {
+          p_customer_address: string
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_items: Json
+          p_merchant_id: string
+          p_note: string
+          p_shipping_fee: number
+        }
+        Returns: Json
+      }
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: string
@@ -1150,6 +1409,13 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       customer_tag: "new" | "regular" | "vip" | "blocked"
+      order_status:
+        | "pending"
+        | "paid"
+        | "shipping"
+        | "completed"
+        | "cancelled"
+        | "refunded"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1279,6 +1545,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       customer_tag: ["new", "regular", "vip", "blocked"],
+      order_status: [
+        "pending",
+        "paid",
+        "shipping",
+        "completed",
+        "cancelled",
+        "refunded",
+      ],
     },
   },
 } as const
