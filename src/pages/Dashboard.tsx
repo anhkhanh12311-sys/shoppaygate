@@ -151,6 +151,8 @@ const Dashboard = () => {
     { key: "sepay-sync", component: <SepaySync /> },
     { key: "branded-receipt", component: <BrandedReceiptSettings /> },
     { key: "store", component: <StoreSettings /> },
+    { key: "products", component: <ProductsManagement /> },
+    { key: "orders", component: <OrdersManagement /> },
     { key: "staff", component: <StaffManagement /> },
     { key: "customers", component: <CustomersCRM /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },
