@@ -90,7 +90,11 @@ Deno.serve(async (req) => {
     });
     if (!resp.ok) {
       const txt = await resp.text();
-      return json({ success: false, error: `SePay API ${resp.status}: ${txt.slice(0, 200)}` }, 502);
+      const friendly =
+        resp.status === 401 || resp.status === 403
+          ? "SePay API key không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại trong mục Đồng bộ SePay."
+          : `SePay API lỗi ${resp.status}: ${txt.slice(0, 200)}`;
+      return json({ success: false, error: friendly, sepay_status: resp.status }, 200);
     }
 
     const data: SepayListResponse = await resp.json();
