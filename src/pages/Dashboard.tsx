@@ -32,6 +32,7 @@ import TopupBalance from "@/components/dashboard/TopupBalance";
 import InstallPrompt from "@/components/InstallPrompt";
 import BrandedReceiptSettings from "@/components/dashboard/BrandedReceiptSettings";
 import BillHistory from "@/components/dashboard/BillHistory";
+import CustomersCRM from "@/components/dashboard/CustomersCRM";
 
 const navSections = [
   {
