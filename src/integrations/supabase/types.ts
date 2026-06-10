@@ -74,6 +74,69 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          last_paid_at: string | null
+          merchant_id: string
+          notes: string | null
+          phone: string | null
+          source: string | null
+          tag: Database["public"]["Enums"]["customer_tag"]
+          total_spent: number
+          tx_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          last_paid_at?: string | null
+          merchant_id: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          tag?: Database["public"]["Enums"]["customer_tag"]
+          total_spent?: number
+          tx_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          last_paid_at?: string | null
+          merchant_id?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          tag?: Database["public"]["Enums"]["customer_tag"]
+          total_spent?: number
+          tx_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_banks: {
         Row: {
           bank_account_name: string
@@ -945,6 +1008,7 @@ export type Database = {
         Returns: string
       }
       get_admin_stats: { Args: never; Returns: Json }
+      get_customer_stats: { Args: never; Returns: Json }
       get_daily_revenue: {
         Args: { p_days?: number }
         Returns: {
@@ -1056,6 +1120,7 @@ export type Database = {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: Json
       }
+      sync_customers_from_transactions: { Args: never; Returns: number }
       update_my_merchant_secrets: {
         Args: {
           p_clear_sepay?: boolean
@@ -1071,9 +1136,20 @@ export type Database = {
         Args: { p_callback_url: string; p_secret: string }
         Returns: undefined
       }
+      upsert_customer_manual: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_notes?: string
+          p_phone: string
+          p_tag?: Database["public"]["Enums"]["customer_tag"]
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      customer_tag: "new" | "regular" | "vip" | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1202,6 +1278,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      customer_tag: ["new", "regular", "vip", "blocked"],
     },
   },
 } as const
