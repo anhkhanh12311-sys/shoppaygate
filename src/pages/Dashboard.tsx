@@ -148,6 +148,7 @@ const Dashboard = () => {
     { key: "branded-receipt", component: <BrandedReceiptSettings /> },
     { key: "store", component: <StoreSettings /> },
     { key: "staff", component: <StaffManagement /> },
+    { key: "customers", component: <CustomersCRM /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
