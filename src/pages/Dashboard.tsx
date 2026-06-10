@@ -62,6 +62,7 @@ const navSections = [
     items: [
       { value: "store", label: "Cửa hàng", icon: Store },
       { value: "staff", label: "Nhân viên", icon: Users },
+      { value: "customers", label: "Khách hàng", icon: Contact },
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
       { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
       { value: "settings", label: "Ngân hàng", icon: Settings },
