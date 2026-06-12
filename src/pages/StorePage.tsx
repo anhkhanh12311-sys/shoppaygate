@@ -56,6 +56,9 @@ const StorePage = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrder, setSuccessOrder] = useState<{ code: string; total: number } | null>(null);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherInfo, setVoucherInfo] = useState<{ valid: boolean; discount?: number; error?: string; name?: string } | null>(null);
+  const [validatingVoucher, setValidatingVoucher] = useState(false);
   const [form, setForm] = useState({
     customer_name: "", customer_phone: "", customer_email: "",
     customer_address: "", note: "",
@@ -121,14 +124,32 @@ const StorePage = () => {
       p_note: form.note || null,
       p_shipping_fee: 0,
       p_items: cart.items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-    });
+      p_voucher_code: voucherInfo?.valid ? voucherCode : null,
+    } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
     const res = data as { order_code: string; total: number };
     setCheckoutOpen(false);
     setCartOpen(false);
     cart.clear();
+    setVoucherCode(""); setVoucherInfo(null);
     setSuccessOrder({ code: res.order_code, total: res.total });
+  };
+
+  const applyVoucher = async () => {
+    if (!store || !voucherCode.trim()) return;
+    setValidatingVoucher(true);
+    const { data, error } = await supabase.rpc("validate_voucher" as any, {
+      p_merchant_id: store.merchant_id,
+      p_code: voucherCode.trim(),
+      p_subtotal: cart.total,
+      p_shipping_fee: 0,
+    });
+    setValidatingVoucher(false);
+    if (error) return toast.error(error.message);
+    setVoucherInfo(data as any);
+    if ((data as any)?.valid) toast.success(`Áp dụng thành công: -${fmt((data as any).discount)}₫`);
+    else toast.error((data as any)?.error || "Mã không hợp lệ");
   };
 
   if (loading) {
