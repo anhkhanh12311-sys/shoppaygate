@@ -56,6 +56,9 @@ const StorePage = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrder, setSuccessOrder] = useState<{ code: string; total: number } | null>(null);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherInfo, setVoucherInfo] = useState<{ valid: boolean; discount?: number; error?: string; name?: string } | null>(null);
+  const [validatingVoucher, setValidatingVoucher] = useState(false);
   const [form, setForm] = useState({
     customer_name: "", customer_phone: "", customer_email: "",
     customer_address: "", note: "",
@@ -121,14 +124,32 @@ const StorePage = () => {
       p_note: form.note || null,
       p_shipping_fee: 0,
       p_items: cart.items.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
-    });
+      p_voucher_code: voucherInfo?.valid ? voucherCode : null,
+    } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
     const res = data as { order_code: string; total: number };
     setCheckoutOpen(false);
     setCartOpen(false);
     cart.clear();
+    setVoucherCode(""); setVoucherInfo(null);
     setSuccessOrder({ code: res.order_code, total: res.total });
+  };
+
+  const applyVoucher = async () => {
+    if (!store || !voucherCode.trim()) return;
+    setValidatingVoucher(true);
+    const { data, error } = await supabase.rpc("validate_voucher" as any, {
+      p_merchant_id: store.merchant_id,
+      p_code: voucherCode.trim(),
+      p_subtotal: cart.total,
+      p_shipping_fee: 0,
+    });
+    setValidatingVoucher(false);
+    if (error) return toast.error(error.message);
+    setVoucherInfo(data as any);
+    if ((data as any)?.valid) toast.success(`Áp dụng thành công: -${fmt((data as any).discount)}₫`);
+    else toast.error((data as any)?.error || "Mã không hợp lệ");
   };
 
   if (loading) {
@@ -411,6 +432,23 @@ const StorePage = () => {
               <Textarea rows={2} value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} />
             </div>
 
+            <div className="space-y-1.5">
+              <Label>Mã giảm giá</Label>
+              <div className="flex gap-2">
+                <Input placeholder="Nhập mã" value={voucherCode}
+                  onChange={e => { setVoucherCode(e.target.value.toUpperCase()); setVoucherInfo(null); }} />
+                <Button type="button" variant="outline" disabled={validatingVoucher || !voucherCode.trim()}
+                  onClick={applyVoucher}>
+                  {validatingVoucher ? "..." : "Áp dụng"}
+                </Button>
+              </div>
+              {voucherInfo && (
+                <p className={`text-xs ${voucherInfo.valid ? "text-emerald-600" : "text-destructive"}`}>
+                  {voucherInfo.valid ? `✓ Giảm ${fmt(voucherInfo.discount || 0)}₫` : voucherInfo.error}
+                </p>
+              )}
+            </div>
+
             <div className="rounded-xl border p-3 space-y-1.5 text-sm bg-muted/30">
               <p className="text-xs font-semibold uppercase text-muted-foreground">Đơn hàng</p>
               {cart.items.map(it => (
@@ -419,11 +457,20 @@ const StorePage = () => {
                   <span className="tabular-nums">{fmt(it.price * it.quantity)}₫</span>
                 </div>
               ))}
+              <div className="flex justify-between text-xs text-muted-foreground pt-1 border-t">
+                <span>Tạm tính</span><span className="tabular-nums">{fmt(cart.total)}₫</span>
+              </div>
+              {voucherInfo?.valid && (
+                <div className="flex justify-between text-xs text-emerald-600">
+                  <span>Giảm giá</span><span className="tabular-nums">-{fmt(voucherInfo.discount || 0)}₫</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold pt-2 border-t">
                 <span>Tổng</span>
-                <span className="text-primary tabular-nums">{fmt(cart.total)}₫</span>
+                <span className="text-primary tabular-nums">{fmt(Math.max(0, cart.total - (voucherInfo?.valid ? (voucherInfo.discount || 0) : 0)))}₫</span>
               </div>
             </div>
+
 
             <Button className="w-full h-11 text-white border-0" style={{ background: gradient }}
               disabled={submitting} onClick={submitOrder}>

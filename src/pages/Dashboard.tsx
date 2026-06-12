@@ -5,7 +5,7 @@ import {
   Sparkles, LayoutDashboard, Settings, Link2, QrCode,
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
-  Receipt, ReceiptText, Contact, Package, ShoppingBag,
+  Receipt, ReceiptText, Contact, Package, ShoppingBag, Ticket, Network,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +35,9 @@ import BillHistory from "@/components/dashboard/BillHistory";
 import CustomersCRM from "@/components/dashboard/CustomersCRM";
 import ProductsManagement from "@/components/dashboard/ProductsManagement";
 import OrdersManagement from "@/components/dashboard/OrdersManagement";
+import VouchersManagement from "@/components/dashboard/VouchersManagement";
+import BankRoutingManager from "@/components/dashboard/BankRoutingManager";
+import TopupRentalCenter from "@/components/dashboard/TopupRentalCenter";
 
 const navSections = [
   {
@@ -56,6 +59,7 @@ const navSections = [
       { value: "qr-static", label: "QR tĩnh", icon: QrCode },
       { value: "topup", label: "Nạp số dư", icon: Wallet },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
+      { value: "topup-rental", label: "Trung tâm thuê nạp", icon: Rocket },
       { value: "integrations", label: "Webhook & API", icon: Plug },
     ],
   },
@@ -65,11 +69,13 @@ const navSections = [
       { value: "store", label: "Cửa hàng", icon: Store },
       { value: "products", label: "Sản phẩm", icon: Package },
       { value: "orders", label: "Đơn hàng", icon: ShoppingBag },
+      { value: "vouchers", label: "Khuyến mãi", icon: Ticket },
       { value: "staff", label: "Nhân viên", icon: Users },
       { value: "customers", label: "Khách hàng", icon: Contact },
       { value: "voice", label: "Loa thanh toán", icon: Volume2 },
       { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
       { value: "settings", label: "Ngân hàng", icon: Settings },
+      { value: "bank-routing", label: "Điều phối NH", icon: Network },
       { value: "account", label: "Tài khoản", icon: User },
     ],
   },
@@ -155,13 +161,16 @@ const Dashboard = () => {
     { key: "orders", component: <OrdersManagement /> },
     { key: "staff", component: <StaffManagement /> },
     { key: "customers", component: <CustomersCRM /> },
+    { key: "vouchers", component: <VouchersManagement /> },
     { key: "voice", component: <VoiceAnnouncerSettings /> },
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
+    { key: "bank-routing", component: <BankRoutingManager /> },
     { key: "create-link", component: <CreatePaymentLink /> },
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },
     { key: "gateway-rental", component: <GatewayRental /> },
+    { key: "topup-rental", component: <TopupRentalCenter /> },
     { key: "integrations", component: <Integrations /> },
   ];
 

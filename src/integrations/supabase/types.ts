@@ -139,33 +139,57 @@ export type Database = {
       }
       merchant_banks: {
         Row: {
+          auto_route_enabled: boolean
           bank_account_name: string
           bank_account_number: string
           bank_name: string
           created_at: string
+          current_daily_received: number
+          daily_limit: number | null
           id: string
           is_default: boolean
+          last_reset_date: string | null
+          last_used_at: string | null
           merchant_id: string
+          priority: number
+          sepay_account_id: string | null
+          sepay_api_key: string | null
           updated_at: string
         }
         Insert: {
+          auto_route_enabled?: boolean
           bank_account_name: string
           bank_account_number: string
           bank_name: string
           created_at?: string
+          current_daily_received?: number
+          daily_limit?: number | null
           id?: string
           is_default?: boolean
+          last_reset_date?: string | null
+          last_used_at?: string | null
           merchant_id: string
+          priority?: number
+          sepay_account_id?: string | null
+          sepay_api_key?: string | null
           updated_at?: string
         }
         Update: {
+          auto_route_enabled?: boolean
           bank_account_name?: string
           bank_account_number?: string
           bank_name?: string
           created_at?: string
+          current_daily_received?: number
+          daily_limit?: number | null
           id?: string
           is_default?: boolean
+          last_reset_date?: string | null
+          last_used_at?: string | null
           merchant_id?: string
+          priority?: number
+          sepay_account_id?: string | null
+          sepay_api_key?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -383,10 +407,13 @@ export type Database = {
           id: string
           merchant_id: string
           plan_id: string
+          quota_reset_at: string | null
           started_at: string
           status: string
           topup_callback_url: string | null
           topup_secret: string | null
+          tx_quota_limit: number | null
+          tx_quota_used: number
           tx_used: number
           updated_at: string
         }
@@ -398,10 +425,13 @@ export type Database = {
           id?: string
           merchant_id: string
           plan_id: string
+          quota_reset_at?: string | null
           started_at?: string
           status?: string
           topup_callback_url?: string | null
           topup_secret?: string | null
+          tx_quota_limit?: number | null
+          tx_quota_used?: number
           tx_used?: number
           updated_at?: string
         }
@@ -413,10 +443,13 @@ export type Database = {
           id?: string
           merchant_id?: string
           plan_id?: string
+          quota_reset_at?: string | null
           started_at?: string
           status?: string
           topup_callback_url?: string | null
           topup_secret?: string | null
+          tx_quota_limit?: number | null
+          tx_quota_used?: number
           tx_used?: number
           updated_at?: string
         }
@@ -553,6 +586,8 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
+          voucher_code: string | null
+          voucher_id: string | null
         }
         Insert: {
           channel?: string | null
@@ -574,6 +609,8 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          voucher_code?: string | null
+          voucher_id?: string | null
         }
         Update: {
           channel?: string | null
@@ -595,6 +632,8 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          voucher_code?: string | null
+          voucher_id?: string | null
         }
         Relationships: [
           {
@@ -618,6 +657,13 @@ export type Database = {
             referencedRelation: "payment_links"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
         ]
       }
       payment_links: {
@@ -631,6 +677,7 @@ export type Database = {
           is_static: boolean
           is_topup: boolean
           merchant_id: string
+          selected_bank_id: string | null
           status: string
         }
         Insert: {
@@ -643,6 +690,7 @@ export type Database = {
           is_static?: boolean
           is_topup?: boolean
           merchant_id: string
+          selected_bank_id?: string | null
           status?: string
         }
         Update: {
@@ -655,6 +703,7 @@ export type Database = {
           is_static?: boolean
           is_topup?: boolean
           merchant_id?: string
+          selected_bank_id?: string | null
           status?: string
         }
         Relationships: [
@@ -670,6 +719,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_selected_bank_id_fkey"
+            columns: ["selected_bank_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_banks"
             referencedColumns: ["id"]
           },
         ]
@@ -972,9 +1028,12 @@ export type Database = {
           error: string | null
           http_status: number | null
           id: string
+          last_error: string | null
           merchant_id: string
+          next_retry_at: string | null
           payload: Json
           response_body: string | null
+          retry_count: number
           signature: string | null
           status: string
           transaction_id: string | null
@@ -989,9 +1048,12 @@ export type Database = {
           error?: string | null
           http_status?: number | null
           id?: string
+          last_error?: string | null
           merchant_id: string
+          next_retry_at?: string | null
           payload: Json
           response_body?: string | null
+          retry_count?: number
           signature?: string | null
           status?: string
           transaction_id?: string | null
@@ -1006,9 +1068,12 @@ export type Database = {
           error?: string | null
           http_status?: number | null
           id?: string
+          last_error?: string | null
           merchant_id?: string
+          next_retry_at?: string | null
           payload?: Json
           response_body?: string | null
+          retry_count?: number
           signature?: string | null
           status?: string
           transaction_id?: string | null
@@ -1093,6 +1158,140 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      voucher_redemptions: {
+        Row: {
+          created_at: string
+          customer_phone: string | null
+          discount_amount: number
+          id: string
+          merchant_id: string
+          order_id: string | null
+          voucher_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_phone?: string | null
+          discount_amount?: number
+          id?: string
+          merchant_id: string
+          order_id?: string | null
+          voucher_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_phone?: string | null
+          discount_amount?: number
+          id?: string
+          merchant_id?: string
+          order_id?: string | null
+          voucher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_redemptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          merchant_id: string
+          min_order: number
+          name: string | null
+          per_customer_limit: number | null
+          starts_at: string | null
+          type: Database["public"]["Enums"]["voucher_type"]
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          merchant_id: string
+          min_order?: number
+          name?: string | null
+          per_customer_limit?: number | null
+          starts_at?: string | null
+          type?: Database["public"]["Enums"]["voucher_type"]
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          value?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          merchant_id?: string
+          min_order?: number
+          name?: string | null
+          per_customer_limit?: number | null
+          starts_at?: string | null
+          type?: Database["public"]["Enums"]["voucher_type"]
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_events: {
         Row: {
@@ -1231,6 +1430,7 @@ export type Database = {
         Returns: string
       }
       get_admin_stats: { Args: never; Returns: Json }
+      get_bank_routing_stats: { Args: never; Returns: Json }
       get_customer_stats: { Args: never; Returns: Json }
       get_daily_revenue: {
         Args: { p_days?: number }
@@ -1334,6 +1534,8 @@ export type Database = {
           tx_count: number
         }[]
       }
+      get_topup_rental_dashboard: { Args: never; Returns: Json }
+      get_voucher_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1358,18 +1560,87 @@ export type Database = {
         Returns: string
       }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
-      public_create_order: {
+      link_bank_sepay: {
         Args: {
-          p_customer_address: string
-          p_customer_email: string
-          p_customer_name: string
-          p_customer_phone: string
-          p_items: Json
-          p_merchant_id: string
-          p_note: string
-          p_shipping_fee: number
+          p_bank_id: string
+          p_sepay_account_id: string
+          p_sepay_api_key: string
         }
+        Returns: undefined
+      }
+      list_topup_callbacks: {
+        Args: { p_limit?: number; p_status?: string }
+        Returns: {
+          amount: number
+          attempt_count: number
+          callback_url: string
+          created_at: string
+          customer_ref: string | null
+          delivered_at: string | null
+          error: string | null
+          http_status: number | null
+          id: string
+          last_error: string | null
+          merchant_id: string
+          next_retry_at: string | null
+          payload: Json
+          response_body: string | null
+          retry_count: number
+          signature: string | null
+          status: string
+          transaction_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "topup_callbacks"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      pick_best_bank: {
+        Args: { p_amount?: number; p_merchant_id: string }
+        Returns: string
+      }
+      public_create_order:
+        | {
+            Args: {
+              p_customer_address: string
+              p_customer_email: string
+              p_customer_name: string
+              p_customer_phone: string
+              p_items: Json
+              p_merchant_id: string
+              p_note: string
+              p_shipping_fee: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_customer_address: string
+              p_customer_email: string
+              p_customer_name: string
+              p_customer_phone: string
+              p_items: Json
+              p_merchant_id: string
+              p_note: string
+              p_shipping_fee: number
+              p_voucher_code?: string
+            }
+            Returns: Json
+          }
+      record_bank_usage: {
+        Args: { p_amount: number; p_bank_id: string }
+        Returns: undefined
+      }
+      record_topup_quota_usage: {
+        Args: { p_merchant_id: string }
         Returns: Json
+      }
+      regenerate_topup_secret: { Args: never; Returns: string }
+      retry_topup_callback: {
+        Args: { p_callback_id: string }
+        Returns: undefined
       }
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
@@ -1380,6 +1651,15 @@ export type Database = {
         Returns: Json
       }
       sync_customers_from_transactions: { Args: never; Returns: number }
+      update_bank_routing: {
+        Args: {
+          p_auto_route: boolean
+          p_bank_id: string
+          p_daily_limit: number
+          p_priority: number
+        }
+        Returns: undefined
+      }
       update_my_merchant_secrets: {
         Args: {
           p_clear_sepay?: boolean
@@ -1405,6 +1685,15 @@ export type Database = {
         }
         Returns: string
       }
+      validate_voucher: {
+        Args: {
+          p_code: string
+          p_merchant_id: string
+          p_shipping_fee?: number
+          p_subtotal: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
@@ -1416,6 +1705,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "refunded"
+      voucher_type: "percent" | "fixed" | "freeship"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1553,6 +1843,7 @@ export const Constants = {
         "cancelled",
         "refunded",
       ],
+      voucher_type: ["percent", "fixed", "freeship"],
     },
   },
 } as const
