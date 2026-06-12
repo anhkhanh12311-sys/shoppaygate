@@ -139,33 +139,57 @@ export type Database = {
       }
       merchant_banks: {
         Row: {
+          auto_route_enabled: boolean
           bank_account_name: string
           bank_account_number: string
           bank_name: string
           created_at: string
+          current_daily_received: number
+          daily_limit: number | null
           id: string
           is_default: boolean
+          last_reset_date: string | null
+          last_used_at: string | null
           merchant_id: string
+          priority: number
+          sepay_account_id: string | null
+          sepay_api_key: string | null
           updated_at: string
         }
         Insert: {
+          auto_route_enabled?: boolean
           bank_account_name: string
           bank_account_number: string
           bank_name: string
           created_at?: string
+          current_daily_received?: number
+          daily_limit?: number | null
           id?: string
           is_default?: boolean
+          last_reset_date?: string | null
+          last_used_at?: string | null
           merchant_id: string
+          priority?: number
+          sepay_account_id?: string | null
+          sepay_api_key?: string | null
           updated_at?: string
         }
         Update: {
+          auto_route_enabled?: boolean
           bank_account_name?: string
           bank_account_number?: string
           bank_name?: string
           created_at?: string
+          current_daily_received?: number
+          daily_limit?: number | null
           id?: string
           is_default?: boolean
+          last_reset_date?: string | null
+          last_used_at?: string | null
           merchant_id?: string
+          priority?: number
+          sepay_account_id?: string | null
+          sepay_api_key?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -644,6 +668,7 @@ export type Database = {
           is_static: boolean
           is_topup: boolean
           merchant_id: string
+          selected_bank_id: string | null
           status: string
         }
         Insert: {
@@ -656,6 +681,7 @@ export type Database = {
           is_static?: boolean
           is_topup?: boolean
           merchant_id: string
+          selected_bank_id?: string | null
           status?: string
         }
         Update: {
@@ -668,6 +694,7 @@ export type Database = {
           is_static?: boolean
           is_topup?: boolean
           merchant_id?: string
+          selected_bank_id?: string | null
           status?: string
         }
         Relationships: [
@@ -683,6 +710,13 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_selected_bank_id_fkey"
+            columns: ["selected_bank_id"]
+            isOneToOne: false
+            referencedRelation: "merchant_banks"
             referencedColumns: ["id"]
           },
         ]
@@ -1378,6 +1412,7 @@ export type Database = {
         Returns: string
       }
       get_admin_stats: { Args: never; Returns: Json }
+      get_bank_routing_stats: { Args: never; Returns: Json }
       get_customer_stats: { Args: never; Returns: Json }
       get_daily_revenue: {
         Args: { p_days?: number }
@@ -1506,6 +1541,18 @@ export type Database = {
         Returns: string
       }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
+      link_bank_sepay: {
+        Args: {
+          p_bank_id: string
+          p_sepay_account_id: string
+          p_sepay_api_key: string
+        }
+        Returns: undefined
+      }
+      pick_best_bank: {
+        Args: { p_amount?: number; p_merchant_id: string }
+        Returns: string
+      }
       public_create_order:
         | {
             Args: {
@@ -1534,6 +1581,10 @@ export type Database = {
             }
             Returns: Json
           }
+      record_bank_usage: {
+        Args: { p_amount: number; p_bank_id: string }
+        Returns: undefined
+      }
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: string
@@ -1543,6 +1594,15 @@ export type Database = {
         Returns: Json
       }
       sync_customers_from_transactions: { Args: never; Returns: number }
+      update_bank_routing: {
+        Args: {
+          p_auto_route: boolean
+          p_bank_id: string
+          p_daily_limit: number
+          p_priority: number
+        }
+        Returns: undefined
+      }
       update_my_merchant_secrets: {
         Args: {
           p_clear_sepay?: boolean
