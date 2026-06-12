@@ -407,10 +407,13 @@ export type Database = {
           id: string
           merchant_id: string
           plan_id: string
+          quota_reset_at: string | null
           started_at: string
           status: string
           topup_callback_url: string | null
           topup_secret: string | null
+          tx_quota_limit: number | null
+          tx_quota_used: number
           tx_used: number
           updated_at: string
         }
@@ -422,10 +425,13 @@ export type Database = {
           id?: string
           merchant_id: string
           plan_id: string
+          quota_reset_at?: string | null
           started_at?: string
           status?: string
           topup_callback_url?: string | null
           topup_secret?: string | null
+          tx_quota_limit?: number | null
+          tx_quota_used?: number
           tx_used?: number
           updated_at?: string
         }
@@ -437,10 +443,13 @@ export type Database = {
           id?: string
           merchant_id?: string
           plan_id?: string
+          quota_reset_at?: string | null
           started_at?: string
           status?: string
           topup_callback_url?: string | null
           topup_secret?: string | null
+          tx_quota_limit?: number | null
+          tx_quota_used?: number
           tx_used?: number
           updated_at?: string
         }
@@ -1019,9 +1028,12 @@ export type Database = {
           error: string | null
           http_status: number | null
           id: string
+          last_error: string | null
           merchant_id: string
+          next_retry_at: string | null
           payload: Json
           response_body: string | null
+          retry_count: number
           signature: string | null
           status: string
           transaction_id: string | null
@@ -1036,9 +1048,12 @@ export type Database = {
           error?: string | null
           http_status?: number | null
           id?: string
+          last_error?: string | null
           merchant_id: string
+          next_retry_at?: string | null
           payload: Json
           response_body?: string | null
+          retry_count?: number
           signature?: string | null
           status?: string
           transaction_id?: string | null
@@ -1053,9 +1068,12 @@ export type Database = {
           error?: string | null
           http_status?: number | null
           id?: string
+          last_error?: string | null
           merchant_id?: string
+          next_retry_at?: string | null
           payload?: Json
           response_body?: string | null
+          retry_count?: number
           signature?: string | null
           status?: string
           transaction_id?: string | null
@@ -1516,6 +1534,7 @@ export type Database = {
           tx_count: number
         }[]
       }
+      get_topup_rental_dashboard: { Args: never; Returns: Json }
       get_voucher_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
@@ -1548,6 +1567,35 @@ export type Database = {
           p_sepay_api_key: string
         }
         Returns: undefined
+      }
+      list_topup_callbacks: {
+        Args: { p_limit?: number; p_status?: string }
+        Returns: {
+          amount: number
+          attempt_count: number
+          callback_url: string
+          created_at: string
+          customer_ref: string | null
+          delivered_at: string | null
+          error: string | null
+          http_status: number | null
+          id: string
+          last_error: string | null
+          merchant_id: string
+          next_retry_at: string | null
+          payload: Json
+          response_body: string | null
+          retry_count: number
+          signature: string | null
+          status: string
+          transaction_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "topup_callbacks"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       pick_best_bank: {
         Args: { p_amount?: number; p_merchant_id: string }
@@ -1583,6 +1631,15 @@ export type Database = {
           }
       record_bank_usage: {
         Args: { p_amount: number; p_bank_id: string }
+        Returns: undefined
+      }
+      record_topup_quota_usage: {
+        Args: { p_merchant_id: string }
+        Returns: Json
+      }
+      regenerate_topup_secret: { Args: never; Returns: string }
+      retry_topup_callback: {
+        Args: { p_callback_id: string }
         Returns: undefined
       }
       subscribe_to_plan: {
