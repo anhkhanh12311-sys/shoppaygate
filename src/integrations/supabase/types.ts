@@ -553,6 +553,8 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
+          voucher_code: string | null
+          voucher_id: string | null
         }
         Insert: {
           channel?: string | null
@@ -574,6 +576,8 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          voucher_code?: string | null
+          voucher_id?: string | null
         }
         Update: {
           channel?: string | null
@@ -595,6 +599,8 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          voucher_code?: string | null
+          voucher_id?: string | null
         }
         Relationships: [
           {
@@ -616,6 +622,13 @@ export type Database = {
             columns: ["payment_link_id"]
             isOneToOne: false
             referencedRelation: "payment_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
             referencedColumns: ["id"]
           },
         ]
@@ -1094,6 +1107,140 @@ export type Database = {
         }
         Relationships: []
       }
+      voucher_redemptions: {
+        Row: {
+          created_at: string
+          customer_phone: string | null
+          discount_amount: number
+          id: string
+          merchant_id: string
+          order_id: string | null
+          voucher_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_phone?: string | null
+          discount_amount?: number
+          id?: string
+          merchant_id: string
+          order_id?: string | null
+          voucher_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_phone?: string | null
+          discount_amount?: number
+          id?: string
+          merchant_id?: string
+          order_id?: string | null
+          voucher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_redemptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          merchant_id: string
+          min_order: number
+          name: string | null
+          per_customer_limit: number | null
+          starts_at: string | null
+          type: Database["public"]["Enums"]["voucher_type"]
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          merchant_id: string
+          min_order?: number
+          name?: string | null
+          per_customer_limit?: number | null
+          starts_at?: string | null
+          type?: Database["public"]["Enums"]["voucher_type"]
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          value?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          merchant_id?: string
+          min_order?: number
+          name?: string | null
+          per_customer_limit?: number | null
+          starts_at?: string | null
+          type?: Database["public"]["Enums"]["voucher_type"]
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_events: {
         Row: {
           created_at: string
@@ -1334,6 +1481,7 @@ export type Database = {
           tx_count: number
         }[]
       }
+      get_voucher_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1358,19 +1506,34 @@ export type Database = {
         Returns: string
       }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
-      public_create_order: {
-        Args: {
-          p_customer_address: string
-          p_customer_email: string
-          p_customer_name: string
-          p_customer_phone: string
-          p_items: Json
-          p_merchant_id: string
-          p_note: string
-          p_shipping_fee: number
-        }
-        Returns: Json
-      }
+      public_create_order:
+        | {
+            Args: {
+              p_customer_address: string
+              p_customer_email: string
+              p_customer_name: string
+              p_customer_phone: string
+              p_items: Json
+              p_merchant_id: string
+              p_note: string
+              p_shipping_fee: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_customer_address: string
+              p_customer_email: string
+              p_customer_name: string
+              p_customer_phone: string
+              p_items: Json
+              p_merchant_id: string
+              p_note: string
+              p_shipping_fee: number
+              p_voucher_code?: string
+            }
+            Returns: Json
+          }
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: string
@@ -1405,6 +1568,15 @@ export type Database = {
         }
         Returns: string
       }
+      validate_voucher: {
+        Args: {
+          p_code: string
+          p_merchant_id: string
+          p_shipping_fee?: number
+          p_subtotal: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
@@ -1416,6 +1588,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "refunded"
+      voucher_type: "percent" | "fixed" | "freeship"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1553,6 +1726,7 @@ export const Constants = {
         "cancelled",
         "refunded",
       ],
+      voucher_type: ["percent", "fixed", "freeship"],
     },
   },
 } as const
