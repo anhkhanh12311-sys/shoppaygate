@@ -88,7 +88,7 @@ const TopupRentalCenter = () => {
             <Label className="text-xs">Webhook Secret (HMAC-SHA256)</Label>
             <div className="flex gap-2">
               <Input value={secret} onChange={e => setSecret(e.target.value)} placeholder="whsec_..." type="password" />
-              <Button variant="outline" size="icon" onClick={async () => { const s = await regenerateSecret(); if (s) setSecret(s); }}>
+              <Button variant="outline" size="icon" onClick={async () => { const s = await regenerateSecret(); if (s) setSecret(String(s)); }}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
