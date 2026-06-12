@@ -432,6 +432,23 @@ const StorePage = () => {
               <Textarea rows={2} value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} />
             </div>
 
+            <div className="space-y-1.5">
+              <Label>Mã giảm giá</Label>
+              <div className="flex gap-2">
+                <Input placeholder="Nhập mã" value={voucherCode}
+                  onChange={e => { setVoucherCode(e.target.value.toUpperCase()); setVoucherInfo(null); }} />
+                <Button type="button" variant="outline" disabled={validatingVoucher || !voucherCode.trim()}
+                  onClick={applyVoucher}>
+                  {validatingVoucher ? "..." : "Áp dụng"}
+                </Button>
+              </div>
+              {voucherInfo && (
+                <p className={`text-xs ${voucherInfo.valid ? "text-emerald-600" : "text-destructive"}`}>
+                  {voucherInfo.valid ? `✓ Giảm ${fmt(voucherInfo.discount || 0)}₫` : voucherInfo.error}
+                </p>
+              )}
+            </div>
+
             <div className="rounded-xl border p-3 space-y-1.5 text-sm bg-muted/30">
               <p className="text-xs font-semibold uppercase text-muted-foreground">Đơn hàng</p>
               {cart.items.map(it => (
@@ -440,11 +457,20 @@ const StorePage = () => {
                   <span className="tabular-nums">{fmt(it.price * it.quantity)}₫</span>
                 </div>
               ))}
+              <div className="flex justify-between text-xs text-muted-foreground pt-1 border-t">
+                <span>Tạm tính</span><span className="tabular-nums">{fmt(cart.total)}₫</span>
+              </div>
+              {voucherInfo?.valid && (
+                <div className="flex justify-between text-xs text-emerald-600">
+                  <span>Giảm giá</span><span className="tabular-nums">-{fmt(voucherInfo.discount || 0)}₫</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold pt-2 border-t">
                 <span>Tổng</span>
-                <span className="text-primary tabular-nums">{fmt(cart.total)}₫</span>
+                <span className="text-primary tabular-nums">{fmt(Math.max(0, cart.total - (voucherInfo?.valid ? (voucherInfo.discount || 0) : 0)))}₫</span>
               </div>
             </div>
+
 
             <Button className="w-full h-11 text-white border-0" style={{ background: gradient }}
               disabled={submitting} onClick={submitOrder}>
