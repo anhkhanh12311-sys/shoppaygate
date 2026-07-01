@@ -159,6 +159,21 @@ const PaymentPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [paymentInfo, paymentStatus]);
 
+  // Signal health probe (once + refresh every 30s while pending)
+  useEffect(() => {
+    if (!paymentInfo || paymentStatus === "completed") return;
+    let stop = false;
+    const load = async () => {
+      const { data } = await supabase.rpc("get_merchant_signal_health", {
+        p_merchant_id: paymentInfo.merchant_id,
+      });
+      if (!stop && data) setSignal(data as any);
+    };
+    load();
+    const t = setInterval(load, 30000);
+    return () => { stop = true; clearInterval(t); };
+  }, [paymentInfo, paymentStatus]);
+
   // Ultra-fast auto-check: aggressive polling + active SePay pull
   useEffect(() => {
     if (!paymentInfo || paymentStatus === "completed") return;
