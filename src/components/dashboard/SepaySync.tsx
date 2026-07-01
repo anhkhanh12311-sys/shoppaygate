@@ -153,6 +153,60 @@ const SepaySync = () => {
         </Card>
       )}
 
+      {signal && (
+        <Card className="border-border/60">
+          <CardContent className="p-4">
+            <div className="grid sm:grid-cols-3 gap-3 text-sm">
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground mb-1">Webhook 24h qua</div>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-bold ${signal.webhook_hits_24h > 0 ? "text-green-600" : "text-amber-600"}`}>
+                    {signal.webhook_hits_24h}
+                  </span>
+                  <span className="text-xs text-muted-foreground">sự kiện</span>
+                </div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground mb-1">Ngân hàng đã liên kết SePay</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold">
+                    {signal.banks_with_sepay_key}/{signal.banks_total}
+                  </span>
+                </div>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground mb-1">Nguồn tín hiệu tổng</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-primary">
+                    {signal.banks_with_sepay_key + (signal.legacy_secret_key ? 1 : 0)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">key</span>
+                </div>
+              </div>
+            </div>
+
+            {signal.webhook_hits_24h === 0 && signal.has_webhook_api_key && (
+              <div className="mt-3 flex gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-medium">Webhook chưa nhận được sự kiện nào trong 24h qua.</div>
+                  <div className="text-muted-foreground mt-0.5">
+                    Kiểm tra cấu hình bên SePay: URL webhook và header <code>Apikey</code> phải khớp với webhook_api_key của cửa hàng.
+                  </div>
+                </div>
+              </div>
+            )}
+            {!signal.has_webhook_api_key && (
+              <div className="mt-3 flex gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-700 dark:text-red-400">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>Chưa tạo <b>Webhook API Key</b>. Vào tab "Webhook & API" để phát hành.</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
