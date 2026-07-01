@@ -53,15 +53,34 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (mErr || !merchant) return json({ success: false, error: "Merchant not found" }, 404);
 
-    // Fetch SePay API key from merchant_secrets
+    // Gather SePay sources: legacy secret + each linked bank
+    const pairs: Array<{ api_key: string; account_number: string | null; origin: string }> = [];
     const { data: secretRow } = await supabase
-      .from("merchant_secrets")
-      .select("sepay_api_key")
+      .from("merchant_secrets").select("sepay_api_key")
+      .eq("merchant_id", merchant.id).maybeSingle();
+    if (secretRow?.sepay_api_key) {
+      pairs.push({
+        api_key: secretRow.sepay_api_key,
+        account_number: merchant.bank_account_number || null,
+        origin: "secret",
+      });
+    }
+    const { data: bankRows } = await supabase
+      .from("merchant_banks")
+      .select("sepay_api_key, bank_account_number")
       .eq("merchant_id", merchant.id)
-      .maybeSingle();
-    const sepayApiKey = secretRow?.sepay_api_key;
-    if (!sepayApiKey) {
-      return json({ success: false, error: "SePay API key chưa được cấu hình" }, 400);
+      .not("sepay_api_key", "is", null);
+    for (const b of (bankRows as any[]) || []) {
+      pairs.push({ api_key: b.sepay_api_key, account_number: b.bank_account_number, origin: "bank" });
+    }
+    const seen = new Set<string>();
+    const sources = pairs.filter(p => {
+      const k = `${p.api_key}::${p.account_number ?? "*"}`;
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+    if (sources.length === 0) {
+      return json({ success: false, error: "Chưa có SePay API key nào (kiểm tra Ngân hàng hoặc Đồng bộ SePay)" }, 400);
     }
 
     // Optional body: { limit, since_hours }
