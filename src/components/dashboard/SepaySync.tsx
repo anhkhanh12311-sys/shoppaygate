@@ -37,6 +37,16 @@ const AUTO_INTERVALS = [
 const SepaySync = () => {
   const { merchant } = useMerchant();
   const { secrets } = useMerchantSecrets();
+  const [signal, setSignal] = useState<{
+    webhook_hits_24h: number;
+    banks_with_sepay_key: number;
+    banks_total: number;
+    legacy_secret_key: boolean;
+    has_webhook_api_key: boolean;
+    last_webhook_at: string | null;
+  } | null>(null);
+  // ... keep existing state below
+  const hasApiKey = !!secrets.sepay_api_key || (signal?.banks_with_sepay_key ?? 0) > 0;
   const { toast } = useToast();
   const [sinceHours, setSinceHours] = useState("24");
   const [limit, setLimit] = useState("50");
