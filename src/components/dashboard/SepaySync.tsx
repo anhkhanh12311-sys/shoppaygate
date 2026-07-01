@@ -109,6 +109,19 @@ const SepaySync = () => {
     };
   }, [autoInterval, hasApiKey, runSync]);
 
+  // Load signal health
+  useEffect(() => {
+    if (!merchant?.id) return;
+    let stop = false;
+    const load = async () => {
+      const { data } = await supabase.rpc("get_merchant_signal_health", { p_merchant_id: merchant.id });
+      if (!stop && data) setSignal(data as any);
+    };
+    load();
+    const t = setInterval(load, 60000);
+    return () => { stop = true; clearInterval(t); };
+  }, [merchant?.id]);
+
 
   return (
     <div className="space-y-6 max-w-4xl">
