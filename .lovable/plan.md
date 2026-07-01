@@ -1,72 +1,97 @@
-ns# Kế hoạch triển khai
+## Nguyên nhân real-time không xác nhận thanh toán
 
-## 1. Module Khuyến mãi & Voucher (mới, độc lập)
+Sau khi kiểm tra hệ thống, tín hiệu SePay không về được vì **2 chỗ đứt gãy** rõ ràng:
 
-**Database** (`vouchers`, `voucher_redemptions`):
-- `code` (unique per merchant), `type` (percent/fixed/freeship), `value`, `min_order`, `max_discount`, `usage_limit`, `used_count`, `per_customer_limit`, `starts_at`, `expires_at`, `is_active`, `applies_to` (all/products/categories).
-- RLS: merchant CRUD của mình. Public RPC `validate_voucher(merchant_id, code, subtotal)` trả discount.
-- Update `public_create_order` nhận `p_voucher_code`, ghi `discount`, `voucher_id` vào `orders` (thêm cột).
-- RPC `get_voucher_stats()` cho dashboard.
+### 1. Edge function `check-pending-transactions` chỉ đọc SePay API key ở chỗ cũ
+Hiện function chỉ query `merchant_secrets.sepay_api_key`. Nhưng sau khi triển khai **Multi‑bank Routing**, các cửa hàng lưu SePay key **trong từng ngân hàng** (`merchant_banks.sepay_api_key`) và thường KHÔNG nhập vào `merchant_secrets` nữa.
 
-**Frontend**:
-- `src/hooks/useVouchers.tsx` — CRUD + stats.
-- `src/components/dashboard/VouchersManagement.tsx` — bảng + dialog tạo, copy code, badge trạng thái, biểu đồ usage.
-- Tích hợp `StorePage.tsx` checkout: ô nhập mã → gọi validate → hiển thị discount/total mới.
-- Menu sidebar "Khuyến mãi" trong nhóm Cửa hàng.
+Bằng chứng từ DB:
+- `hotrotuongtac`: 2 bank, 1 bank có SePay key, secret cũng có → OK
+- `NgockhanhShop`: 2 bank, **0 bank có SePay key**, secret cũng **không có** → polling im lặng
+- `Kshop`: 2 bank, **0 bank có SePay key**, secret cũng **không có** → polling im lặng
+- Log `check-pending-transactions`: **trống** — chứng tỏ hàm bị bỏ qua vì query "no merchants".
 
-## 2. Đa ngân hàng + Tự động điều phối (nâng cấp)
+### 2. Webhook SePay không gọi tới hệ thống
+Log của `sepay-webhook` **hoàn toàn trống**. Nghĩa là SePay chưa được cấu hình để bắn webhook về endpoint của chúng ta (thiếu URL webhook + `Apikey <webhook_api_key>` bên SePay dashboard). Không có webhook + không có polling = không có tín hiệu.
 
-**Database**:
-- `merchant_banks`: thêm `daily_limit`, `current_daily_received`, `last_reset_date`, `priority`, `auto_route_enabled`, `sepay_account_id` (link SePay).
-- RPC `pick_best_bank(merchant_id, amount)`: chọn bank theo thuật toán — ưu tiên: còn hạn mức trong ngày → priority cao nhất → ít giao dịch gần nhất → default.
-- Trigger reset `current_daily_received` khi qua ngày.
-- RPC `link_bank_to_sepay(bank_id, sepay_api_key, account_id)` — lưu liên kết.
+### 3. Sepay-sync có cùng vấn đề
+Function `sepay-sync` cũng chỉ đọc `merchant_secrets.sepay_api_key`, không rơi về bank-level key.
 
-**Frontend**:
-- `src/components/dashboard/BankRoutingManager.tsx` — bảng banks với toggle auto-route, set priority (drag/up-down), set daily limit, nút "Liên kết SePay" (modal nhập API key + chọn account).
-- Hook `useBankRouting.tsx`.
-- Tab "Điều phối" trong trang Ngân hàng hiện có.
-- Khi tạo payment link: gọi `pick_best_bank` thay vì luôn dùng default → ghi `selected_bank_id` vào payment_links (thêm cột).
+Realtime của Supabase đã bật cho `payment_links` và `transactions` (đã kiểm tra) — nên chỉ cần dữ liệu được ghi vào DB là UI PaymentPage sẽ tự đổi trạng thái.
 
-## 3. Hoàn thiện Thuê nạp tiền tự động
+---
 
-**Database**:
-- `topup_rental_plans` (mới): gói thuê (tên, giá/tháng, tx_quota, callback_required, features).
-- `topup_callbacks`: bổ sung `retry_count`, `next_retry_at`, `last_error`.
-- `merchant_subscriptions`: thêm `tx_quota_used`, `tx_quota_limit`, `quota_reset_at`.
-- RPC `record_topup_quota_usage(merchant_id)` — increment + check limit.
-- RPC `get_topup_rental_dashboard()` — thống kê callback success rate, tx còn lại, ngày hết hạn.
+## Kế hoạch sửa lỗi
 
-**Edge function** `topup-callback-retry`:
-- Cron mỗi 5 phút retry các callback `status='failed'` còn `retry_count < 5` với backoff.
-- Sign payload bằng HMAC-SHA256 + `topup_secret`.
+### A. Nâng cấp `check-pending-transactions` để dùng key theo bank
+- Gom tất cả nguồn SePay key của merchant:
+  1. `merchant_secrets.sepay_api_key` (legacy)
+  2. Mỗi `merchant_banks.sepay_api_key` (multi-bank routing) — mỗi key được query với `account_number = bank.bank_account_number`.
+- Loại bỏ trùng lặp theo `(api_key, account_number)`.
+- Với mỗi cặp, gọi `https://my.sepay.vn/userapi/transactions/list?account_number=…&limit=50` và khớp:
+  - Ưu tiên `PG-XXXX` trong `transaction_content`
+  - Fallback: `amount_in ≈ link.amount` + link `active` của merchant trong 24h
+- Ghi `bank_reference` để chống trùng, cập nhật `payment_links.status='completed'` khi không phải `is_static`.
+- Trả về JSON có `polled_pairs`, `matched`, `duplicate` để dễ debug.
 
-**Frontend**:
-- `src/components/dashboard/TopupRentalCenter.tsx` — tổng quan: quota, callback log, test webhook, regenerate secret, copy URL.
-- `src/components/dashboard/TopupCallbackLogs.tsx` — bảng log với filter status, nút retry thủ công.
-- Hook `useTopupRental.tsx`.
+### B. Đồng bộ cùng logic cho `sepay-sync` (thủ công)
+Cho phép chọn "Đồng bộ tất cả bank" — lặp qua các bank có `sepay_api_key`, gộp kết quả trả về (mỗi bank 1 dòng thống kê).
 
-## 4. Pro Dashboard UI (làm lại layout)
+### C. Widget "Trạng thái tín hiệu" trên PaymentPage
+Thêm khối nhỏ dưới nút "Kiểm tra" hiển thị:
+- ✅/⚠️ Webhook SePay đã bắn về (dựa `webhook_events` gần đây của merchant trong 24h — RPC public mới `get_merchant_signal_health(merchant_id)` trả về `webhook_hits_24h`, `banks_with_sepay_key`, `last_webhook_at`).
+- Số lần polling đã chạy (đã có `checkCount`).
+- Gợi ý khi cả webhook và polling đều 0: "Cửa hàng chưa cấu hình SePay — vui lòng chờ nhân viên xác nhận thủ công."
 
-- **Sidebar gọn**: thu nhỏ icon-only khi hover-expand, group có separator + label nhỏ uppercase.
-- **Topbar** mới: breadcrumb + global search (Cmd+K) + quick actions (tạo link, tạo voucher) + notifications popover.
-- **Dense tables**: row 40px, sticky header, column resize, multi-filter chip bar.
-- **KPI cards**: spark-line mini chart bằng recharts, so sánh % WoW.
-- **Theme**: giữ glassmorphism nhưng tăng density — padding p-4 thay p-6, font-size 13px base cho table.
-- File mới: `src/components/layout/ProTopbar.tsx`, `src/components/layout/CommandPalette.tsx`, `src/components/ui/kpi-card.tsx`, `src/components/ui/data-table-pro.tsx`.
+### D. Trong Dashboard → tab "Đồng bộ SePay" thêm cảnh báo chẩn đoán
+- Nếu merchant có bank nhưng không bank nào có SePay key **và** `merchant_secrets.sepay_api_key` cũng trống → banner đỏ: "Chưa có nguồn tín hiệu SePay nào".
+- Nếu có key nhưng 24h qua không có `webhook_events` nào → banner vàng kèm URL webhook cần dán vào SePay và `Apikey` header.
 
-## Thứ tự thực hiện
+### E. Không thay đổi
+- Bảng DB, RLS, realtime publication (đã đúng).
+- Client polling trên `PaymentPage.tsx` (đã ổn) — chỉ cần backend trả kết quả đúng.
 
-1. Migration #1: vouchers + cập nhật orders.
-2. Migration #2: multi-bank routing fields + RPC pick_best_bank.
-3. Migration #3: topup rental plans + quota tracking.
-4. Edge function `topup-callback-retry` + cron.
-5. Hooks & components Voucher → Bank routing → Topup rental.
-6. Pro Dashboard layout (Topbar, CommandPalette, KPI cards, DataTablePro).
-7. Tích hợp menu sidebar mới + route Dashboard.
+---
 
-## Nguyên tắc
+## Chi tiết kỹ thuật
 
-- Mỗi tính năng = 1 hook + 1 component chính + (nếu cần) sub-components, đặt theo nhóm `dashboard/voucher/`, `dashboard/bank-routing/`, `dashboard/topup-rental/`.
-- Không sửa các file cũ trừ Dashboard.tsx (thêm route) và StorePage.tsx (thêm input voucher).
-- Tất cả RPC mới có `SECURITY DEFINER` + scope theo `auth.uid()`.
+**Query gom SePay sources trong `check-pending-transactions`:**
+```ts
+type SepaySource = { merchant_id: string; api_key: string; account_number?: string };
+const sources: SepaySource[] = [];
+// 1) merchant_secrets
+const secrets = await sb.from("merchant_secrets")
+  .select("merchant_id, sepay_api_key, merchants!inner(bank_account_number)")
+  .not("sepay_api_key","is",null);
+// 2) merchant_banks
+const banks = await sb.from("merchant_banks")
+  .select("merchant_id, sepay_api_key, bank_account_number")
+  .not("sepay_api_key","is",null);
+```
+
+**RPC mới:**
+```sql
+CREATE FUNCTION public.get_merchant_signal_health(p_merchant_id uuid)
+RETURNS json LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+  SELECT json_build_object(
+    'webhook_hits_24h', (SELECT COUNT(*) FROM webhook_events
+       WHERE payload->>'accountNumber' IN
+         (SELECT bank_account_number FROM merchant_banks WHERE merchant_id=p_merchant_id)
+       AND created_at > now() - interval '24 hours'),
+    'last_webhook_at', (SELECT MAX(created_at) FROM webhook_events
+       WHERE payload->>'accountNumber' IN
+         (SELECT bank_account_number FROM merchant_banks WHERE merchant_id=p_merchant_id)),
+    'banks_with_sepay_key', (SELECT COUNT(*) FROM merchant_banks
+       WHERE merchant_id=p_merchant_id AND sepay_api_key IS NOT NULL),
+    'legacy_secret_key', (SELECT sepay_api_key IS NOT NULL FROM merchant_secrets WHERE merchant_id=p_merchant_id)
+  );
+$$;
+GRANT EXECUTE ON FUNCTION public.get_merchant_signal_health(uuid) TO anon, authenticated;
+```
+
+## Files thay đổi
+- `supabase/functions/check-pending-transactions/index.ts` (rewrite phần gom key)
+- `supabase/functions/sepay-sync/index.ts` (fallback bank keys)
+- Migration mới: RPC `get_merchant_signal_health`
+- `src/pages/PaymentPage.tsx` (thêm widget signal health, dùng RPC)
+- `src/components/dashboard/SepaySync.tsx` (banner chẩn đoán)
