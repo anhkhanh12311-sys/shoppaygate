@@ -78,6 +78,12 @@ const PaymentPage = () => {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [checkCount, setCheckCount] = useState(0);
+  const [signal, setSignal] = useState<{
+    webhook_hits_24h: number;
+    banks_with_sepay_key: number;
+    legacy_secret_key: boolean;
+    last_webhook_at: string | null;
+  } | null>(null);
   const { toast } = useToast();
 
   const markCompleted = () => {
