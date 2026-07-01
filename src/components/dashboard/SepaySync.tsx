@@ -56,7 +56,7 @@ const SepaySync = () => {
   const [lastRun, setLastRun] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState(0);
 
-  const hasApiKey = !!secrets.sepay_api_key;
+  
 
   const runSync = useCallback(async () => {
     if (!hasApiKey) {
