@@ -1441,6 +1441,10 @@ export type Database = {
         }[]
       }
       get_merchant_id_for_auth_user: { Args: never; Returns: string }
+      get_merchant_signal_health: {
+        Args: { p_merchant_id: string }
+        Returns: Json
+      }
       get_my_merchant_secrets: {
         Args: never
         Returns: {

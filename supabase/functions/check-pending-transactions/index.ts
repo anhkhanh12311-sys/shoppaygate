@@ -1,241 +1,215 @@
- import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
- 
- const corsHeaders = {
-   "Access-Control-Allow-Origin": "*",
-   "Access-Control-Allow-Headers":
-     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
- };
- 
- interface SepayTransaction {
-   id: string;
-   bank_brand_name: string;
-   account_number: string;
-   transaction_date: string;
-   amount_out: number;
-   amount_in: number;
-   accumulated: number;
-   transaction_content: string;
-   reference_number: string;
-   code: string | null;
-   sub_account: string | null;
-   bank_account_id: string;
- }
- 
- interface SepayResponse {
-   status: number;
-   messages: {
-     success: boolean;
-   };
-   transactions: SepayTransaction[];
- }
- 
- Deno.serve(async (req) => {
-   // Handle CORS preflight requests
-   if (req.method === "OPTIONS") {
-     return new Response("ok", { headers: corsHeaders });
-   }
- 
-   console.log("Check pending transactions started");
- 
-   try {
-     const supabase = createClient(
-       Deno.env.get("SUPABASE_URL")!,
-       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-     );
- 
-     // Parse request body for merchant_id (optional, if not provided check all)
-     let merchantId: string | null = null;
-     let paymentLinkId: string | null = null;
-     
-     try {
-       const body = await req.json();
-       merchantId = body.merchant_id || null;
-       paymentLinkId = body.payment_link_id || null;
-     } catch {
-       // No body provided, check all merchants
-     }
- 
-      // Get merchants with SePay API key configured (from merchant_secrets)
-      let merchantsQuery = supabase
-        .from("merchant_secrets")
-        .select("merchant_id, sepay_api_key, merchants!inner(id, bank_account_number)")
-        .not("sepay_api_key", "is", null);
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-      if (merchantId) {
-        merchantsQuery = merchantsQuery.eq("merchant_id", merchantId);
-      }
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
-      const { data: secretRows, error: merchantsError } = await merchantsQuery;
-      const merchants = (secretRows || []).map((r: any) => ({
-        id: r.merchant_id,
-        sepay_api_key: r.sepay_api_key,
-        bank_account_number: r.merchants?.bank_account_number,
-      }));
- 
-    if (merchantsError) {
-      console.error("Error fetching merchants:", merchantsError);
-      return new Response(
-        JSON.stringify({ success: false, error: "Unable to fetch merchants" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
- 
-     if (!merchants || merchants.length === 0) {
-       console.log("No merchants with SePay API key found");
-       return new Response(
-         JSON.stringify({ success: true, message: "No merchants to check" }),
-         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-       );
-     }
- 
-     const results: any[] = [];
- 
-     for (const merchant of merchants) {
-       console.log(`Checking merchant: ${merchant.id}`);
- 
-       // Get pending payment links for this merchant
-       let linksQuery = supabase
-         .from("payment_links")
-         .select("id, code, amount")
-         .eq("merchant_id", merchant.id)
-         .eq("status", "active");
- 
-       if (paymentLinkId) {
-         linksQuery = linksQuery.eq("id", paymentLinkId);
-       }
- 
-       const { data: pendingLinks, error: linksError } = await linksQuery;
- 
-       if (linksError || !pendingLinks || pendingLinks.length === 0) {
-         console.log(`No pending links for merchant ${merchant.id}`);
-         continue;
-       }
- 
-       console.log(`Found ${pendingLinks.length} pending links`);
- 
-       // Fetch recent transactions from SePay API
-       try {
-         const sepayResponse = await fetch(
-           "https://my.sepay.vn/userapi/transactions/list",
-           {
-             method: "GET",
-             headers: {
-               Authorization: `Bearer ${merchant.sepay_api_key}`,
-               "Content-Type": "application/json",
-             },
-           }
-         );
- 
-         if (!sepayResponse.ok) {
-           console.error(
-             `SePay API error for merchant ${merchant.id}:`,
-             sepayResponse.status
-           );
-           results.push({
-             merchant_id: merchant.id,
-             success: false,
-             error: `SePay API error: ${sepayResponse.status}`,
-           });
-           continue;
-         }
- 
-         const sepayData: SepayResponse = await sepayResponse.json();
- 
-         if (!sepayData.messages?.success || !sepayData.transactions) {
-           console.log(`No transactions from SePay for merchant ${merchant.id}`);
-           continue;
-         }
- 
-         console.log(
-           `Received ${sepayData.transactions.length} transactions from SePay`
-         );
- 
-         // Match transactions with pending payment links
-         for (const link of pendingLinks) {
-           const matchingTransaction = sepayData.transactions.find((tx) => {
-             const contentUpper = tx.transaction_content.toUpperCase();
-             const codeMatch = contentUpper.includes(link.code.toUpperCase());
-             const amountMatch = tx.amount_in >= link.amount * 0.99; // 1% tolerance
-             return codeMatch && amountMatch;
-           });
- 
-           if (matchingTransaction) {
-             console.log(
-               `Found matching transaction for payment link ${link.id}`
-             );
- 
-             // Check if transaction already exists
-             const { data: existingTx } = await supabase
-               .from("transactions")
-               .select("id")
-               .eq("bank_reference", matchingTransaction.reference_number)
-               .single();
- 
-             if (!existingTx) {
-               // Insert new transaction
-               const { data: newTxId, error: insertError } = await supabase.rpc(
-                 "insert_transaction_from_webhook",
-                 {
-                   p_payment_link_id: link.id,
-                   p_merchant_id: merchant.id,
-                   p_amount: matchingTransaction.amount_in,
-                   p_transfer_content: matchingTransaction.transaction_content,
-                   p_bank_reference: matchingTransaction.reference_number,
-                   p_status: "completed",
-                   p_paid_at: new Date(
-                     matchingTransaction.transaction_date
-                   ).toISOString(),
-                 }
-               );
- 
-               if (insertError) {
-                 console.error("Error inserting transaction:", insertError);
-               } else {
-                 console.log("Transaction created:", newTxId);
- 
-                 // Update payment link status
-                 await supabase
-                   .from("payment_links")
-                   .update({ status: "completed" })
-                   .eq("id", link.id);
- 
-                 results.push({
-                   merchant_id: merchant.id,
-                   payment_link_id: link.id,
-                   transaction_id: newTxId,
-                   success: true,
-                 });
-               }
-             } else {
-               console.log(`Transaction already exists: ${existingTx.id}`);
-             }
-           }
-         }
-       } catch (apiError) {
-       const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
-       console.error(`Error calling SePay API for merchant ${merchant.id}:`, errorMessage);
-       results.push({
-         merchant_id: merchant.id,
-         success: false,
-         error: errorMessage,
-       });
-       }
-     }
- 
-     return new Response(
-       JSON.stringify({
-         success: true,
-         results,
-         checked_merchants: merchants.length,
-       }),
-       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-     );
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Error checking pending transactions:", errorMessage);
-    return new Response(
-      JSON.stringify({ success: false, error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+interface SepayTx {
+  id: string | number;
+  transaction_date: string;
+  amount_in: string | number;
+  transaction_content: string;
+  reference_number: string;
+}
+
+interface SepaySource {
+  merchant_id: string;
+  api_key: string;
+  account_number: string | null;
+  origin: "secret" | "bank";
+}
+
+const json = (b: Record<string, unknown>, s = 200) =>
+  new Response(JSON.stringify(b), {
+    status: s,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    let merchantId: string | null = null;
+    let paymentLinkId: string | null = null;
+    try {
+      const body = await req.json();
+      merchantId = body?.merchant_id ?? null;
+      paymentLinkId = body?.payment_link_id ?? null;
+    } catch { /* no body */ }
+
+    // ===== Collect SePay sources =====
+    const sources: SepaySource[] = [];
+
+    // A) Legacy: merchant_secrets.sepay_api_key
+    let secretsQ = supabase
+      .from("merchant_secrets")
+      .select("merchant_id, sepay_api_key, merchants!inner(bank_account_number)")
+      .not("sepay_api_key", "is", null);
+    if (merchantId) secretsQ = secretsQ.eq("merchant_id", merchantId);
+    const { data: secRows } = await secretsQ;
+    for (const r of (secRows as any[]) || []) {
+      sources.push({
+        merchant_id: r.merchant_id,
+        api_key: r.sepay_api_key,
+        account_number: r.merchants?.bank_account_number ?? null,
+        origin: "secret",
+      });
+    }
+
+    // B) Multi-bank: merchant_banks.sepay_api_key
+    let banksQ = supabase
+      .from("merchant_banks")
+      .select("merchant_id, sepay_api_key, bank_account_number")
+      .not("sepay_api_key", "is", null);
+    if (merchantId) banksQ = banksQ.eq("merchant_id", merchantId);
+    const { data: bankRows } = await banksQ;
+    for (const r of (bankRows as any[]) || []) {
+      sources.push({
+        merchant_id: r.merchant_id,
+        api_key: r.sepay_api_key,
+        account_number: r.bank_account_number,
+        origin: "bank",
+      });
+    }
+
+    // Dedupe by (api_key + account_number)
+    const seen = new Set<string>();
+    const uniq = sources.filter((s) => {
+      const k = `${s.api_key}::${s.account_number ?? "*"}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+
+    if (uniq.length === 0) {
+      return json({
+        success: true,
+        polled_pairs: 0,
+        matched: 0,
+        duplicate: 0,
+        note: "No SePay API keys configured (checked merchant_secrets & merchant_banks)",
+      });
+    }
+
+    let matched = 0;
+    let duplicate = 0;
+    const details: any[] = [];
+
+    // Pending links cache per merchant
+    const linksCache = new Map<string, any[]>();
+    const loadLinks = async (mid: string) => {
+      if (linksCache.has(mid)) return linksCache.get(mid)!;
+      let q = supabase
+        .from("payment_links")
+        .select("id, code, amount, is_static, status, merchant_id")
+        .eq("merchant_id", mid)
+        .eq("status", "active");
+      if (paymentLinkId) q = q.eq("id", paymentLinkId);
+      const { data } = await q;
+      linksCache.set(mid, (data as any[]) || []);
+      return linksCache.get(mid)!;
+    };
+
+    for (const src of uniq) {
+      const links = await loadLinks(src.merchant_id);
+      if (links.length === 0) continue;
+
+      const url = new URL("https://my.sepay.vn/userapi/transactions/list");
+      url.searchParams.set("limit", "50");
+      if (src.account_number) url.searchParams.set("account_number", src.account_number);
+
+      let resp: Response;
+      try {
+        resp = await fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${src.api_key}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (e) {
+        console.error("SePay fetch error", src.merchant_id, (e as Error).message);
+        continue;
+      }
+      if (!resp.ok) {
+        console.error("SePay HTTP", resp.status, src.merchant_id, src.origin);
+        continue;
+      }
+      const data = await resp.json();
+      const txs: SepayTx[] = data?.transactions || [];
+
+      const linksByCode = new Map<string, any>();
+      links.forEach((l) => linksByCode.set(l.code.toUpperCase(), l));
+
+      for (const tx of txs) {
+        const amtIn = Number(tx.amount_in) || 0;
+        if (amtIn <= 0) continue;
+        const ref = tx.reference_number || String(tx.id);
+
+        const { data: existing } = await supabase
+          .from("transactions")
+          .select("id")
+          .eq("bank_reference", ref)
+          .maybeSingle();
+        if (existing) {
+          duplicate++;
+          continue;
+        }
+
+        const contentUpper = (tx.transaction_content || "").toUpperCase();
+        const codeMatch = contentUpper.match(/PG-[A-Z0-9]{6,}/);
+        let link: any = null;
+        if (codeMatch) link = linksByCode.get(codeMatch[0]);
+        if (!link) {
+          link = links.find(
+            (l: any) => l.status === "active" && Math.abs(Number(l.amount) - amtIn) < 1
+          );
+        }
+        if (!link) continue;
+
+        const { data: newId, error: insErr } = await supabase.rpc(
+          "insert_transaction_from_webhook",
+          {
+            p_payment_link_id: link.id,
+            p_merchant_id: src.merchant_id,
+            p_amount: amtIn,
+            p_transfer_content: tx.transaction_content,
+            p_bank_reference: ref,
+            p_status: "completed",
+            p_paid_at: new Date(tx.transaction_date).toISOString(),
+          }
+        );
+        if (insErr) {
+          console.error("Insert error", insErr);
+          continue;
+        }
+        if (!link.is_static) {
+          await supabase.from("payment_links")
+            .update({ status: "completed" }).eq("id", link.id);
+        }
+        matched++;
+        details.push({
+          transaction_id: newId, amount: amtIn, code: link.code,
+          merchant_id: src.merchant_id, via: src.origin,
+        });
+      }
+    }
+
+    return json({
+      success: true,
+      polled_pairs: uniq.length,
+      matched,
+      duplicate,
+      details,
+    });
+  } catch (e) {
+    console.error("check-pending-transactions error:", (e as Error).message);
+    return json({ success: false, error: "Internal server error" }, 500);
   }
- });
+});

@@ -78,6 +78,12 @@ const PaymentPage = () => {
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [checkCount, setCheckCount] = useState(0);
+  const [signal, setSignal] = useState<{
+    webhook_hits_24h: number;
+    banks_with_sepay_key: number;
+    legacy_secret_key: boolean;
+    last_webhook_at: string | null;
+  } | null>(null);
   const { toast } = useToast();
 
   const markCompleted = () => {
@@ -151,6 +157,21 @@ const PaymentPage = () => {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
+  }, [paymentInfo, paymentStatus]);
+
+  // Signal health probe (once + refresh every 30s while pending)
+  useEffect(() => {
+    if (!paymentInfo || paymentStatus === "completed") return;
+    let stop = false;
+    const load = async () => {
+      const { data } = await supabase.rpc("get_merchant_signal_health", {
+        p_merchant_id: paymentInfo.merchant_id,
+      });
+      if (!stop && data) setSignal(data as any);
+    };
+    load();
+    const t = setInterval(load, 30000);
+    return () => { stop = true; clearInterval(t); };
   }, [paymentInfo, paymentStatus]);
 
   // Ultra-fast auto-check: aggressive polling + active SePay pull
@@ -431,6 +452,52 @@ const PaymentPage = () => {
                       {isChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                       Kiểm tra ngay
                     </Button>
+
+                    {signal && (
+                      <div className="rounded-lg border bg-muted/30 p-3 text-xs space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Webhook SePay 24h qua</span>
+                          <Badge
+                            variant="outline"
+                            className={
+                              signal.webhook_hits_24h > 0
+                                ? "text-green-600 border-green-500/40"
+                                : "text-amber-600 border-amber-500/40"
+                            }
+                          >
+                            {signal.webhook_hits_24h > 0 ? `${signal.webhook_hits_24h} sự kiện` : "Chưa có"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Nguồn dự phòng (poll API)</span>
+                          <Badge
+                            variant="outline"
+                            className={
+                              signal.banks_with_sepay_key + (signal.legacy_secret_key ? 1 : 0) > 0
+                                ? "text-green-600 border-green-500/40"
+                                : "text-red-600 border-red-500/40"
+                            }
+                          >
+                            {signal.banks_with_sepay_key + (signal.legacy_secret_key ? 1 : 0)} key
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Số lần đã kiểm tra</span>
+                          <span className="font-medium">{checkCount}</span>
+                        </div>
+                        {signal.webhook_hits_24h === 0 &&
+                          signal.banks_with_sepay_key === 0 &&
+                          !signal.legacy_secret_key && (
+                            <div className="mt-2 flex gap-2 rounded-md bg-amber-500/10 p-2 text-amber-700 dark:text-amber-400">
+                              <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                              <span>
+                                Cửa hàng chưa cấu hình tự động đối soát SePay. Sau khi chuyển khoản,
+                                vui lòng chờ nhân viên xác nhận thủ công.
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

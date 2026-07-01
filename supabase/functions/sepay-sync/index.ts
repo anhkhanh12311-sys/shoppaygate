@@ -53,15 +53,34 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (mErr || !merchant) return json({ success: false, error: "Merchant not found" }, 404);
 
-    // Fetch SePay API key from merchant_secrets
+    // Gather SePay sources: legacy secret + each linked bank
+    const pairs: Array<{ api_key: string; account_number: string | null; origin: string }> = [];
     const { data: secretRow } = await supabase
-      .from("merchant_secrets")
-      .select("sepay_api_key")
+      .from("merchant_secrets").select("sepay_api_key")
+      .eq("merchant_id", merchant.id).maybeSingle();
+    if (secretRow?.sepay_api_key) {
+      pairs.push({
+        api_key: secretRow.sepay_api_key,
+        account_number: merchant.bank_account_number || null,
+        origin: "secret",
+      });
+    }
+    const { data: bankRows } = await supabase
+      .from("merchant_banks")
+      .select("sepay_api_key, bank_account_number")
       .eq("merchant_id", merchant.id)
-      .maybeSingle();
-    const sepayApiKey = secretRow?.sepay_api_key;
-    if (!sepayApiKey) {
-      return json({ success: false, error: "SePay API key chưa được cấu hình" }, 400);
+      .not("sepay_api_key", "is", null);
+    for (const b of (bankRows as any[]) || []) {
+      pairs.push({ api_key: b.sepay_api_key, account_number: b.bank_account_number, origin: "bank" });
+    }
+    const seen = new Set<string>();
+    const sources = pairs.filter(p => {
+      const k = `${p.api_key}::${p.account_number ?? "*"}`;
+      if (seen.has(k)) return false;
+      seen.add(k); return true;
+    });
+    if (sources.length === 0) {
+      return json({ success: false, error: "Chưa có SePay API key nào (kiểm tra Ngân hàng hoặc Đồng bộ SePay)" }, 400);
     }
 
     // Optional body: { limit, since_hours }
@@ -75,119 +94,101 @@ Deno.serve(async (req) => {
 
     const sinceDate = new Date(Date.now() - sinceHours * 3600 * 1000);
 
-    // Build SePay request
-    const url = new URL("https://my.sepay.vn/userapi/transactions/list");
-    url.searchParams.set("limit", String(limit));
-    if (merchant.bank_account_number) {
-      url.searchParams.set("account_number", merchant.bank_account_number);
-    }
-
-    const resp = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${sepayApiKey}`,
-        "Content-Type": "application/json",
-      },
-    });
-    if (!resp.ok) {
-      const txt = await resp.text();
-      const friendly =
-        resp.status === 401 || resp.status === 403
-          ? "SePay API key không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại trong mục Đồng bộ SePay."
-          : `SePay API lỗi ${resp.status}: ${txt.slice(0, 200)}`;
-      return json({ success: false, error: friendly, sepay_status: resp.status }, 200);
-    }
-
-    const data: SepayListResponse = await resp.json();
-    const allTx = (data.transactions || []).filter((t) => {
-      const d = new Date(t.transaction_date);
-      const amtIn = Number(t.amount_in) || 0;
-      return amtIn > 0 && d >= sinceDate;
-    });
-
-    // Get all active payment links for this merchant
+    // Load pending links once
     const { data: links } = await supabase
       .from("payment_links")
       .select("id, code, amount, is_static, status")
       .eq("merchant_id", merchant.id);
-
     const linksByCode = new Map<string, any>();
     (links || []).forEach((l) => linksByCode.set(l.code.toUpperCase(), l));
 
-    let matched = 0;
-    let duplicate = 0;
-    let unmatched = 0;
+    let matched = 0, duplicate = 0, unmatched = 0, totalFetched = 0;
     const matchedDetails: any[] = [];
+    const perSource: any[] = [];
 
-    for (const tx of allTx) {
-      const ref = tx.reference_number || String(tx.id);
-      // dedupe
-      const { data: existing } = await supabase
-        .from("transactions")
-        .select("id")
-        .eq("bank_reference", ref)
-        .maybeSingle();
-      if (existing) {
-        duplicate++;
+    for (const src of sources) {
+      const url = new URL("https://my.sepay.vn/userapi/transactions/list");
+      url.searchParams.set("limit", String(limit));
+      if (src.account_number) url.searchParams.set("account_number", src.account_number);
+
+      let resp: Response;
+      try {
+        resp = await fetch(url.toString(), {
+          headers: {
+            Authorization: `Bearer ${src.api_key}`,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (e) {
+        perSource.push({ account_number: src.account_number, origin: src.origin, error: (e as Error).message });
         continue;
       }
-
-      const contentUpper = (tx.transaction_content || "").toUpperCase();
-      const codeMatch = contentUpper.match(/PG-[A-Z0-9]{6,}/);
-      let link: any = null;
-      if (codeMatch) link = linksByCode.get(codeMatch[0]);
-
-      // Fallback: match by amount + active link
-      if (!link) {
-        const amtIn = Number(tx.amount_in);
-        link = (links || []).find(
-          (l) => l.status === "active" && Math.abs(Number(l.amount) - amtIn) < 1
-        );
-      }
-
-      if (!link) {
-        unmatched++;
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => "");
+        const friendly = resp.status === 401 || resp.status === 403
+          ? "API key không hợp lệ"
+          : `SePay ${resp.status}: ${txt.slice(0, 120)}`;
+        perSource.push({ account_number: src.account_number, origin: src.origin, error: friendly, status: resp.status });
         continue;
       }
+      const data: SepayListResponse = await resp.json();
+      const allTx = (data.transactions || []).filter((t) => {
+        const d = new Date(t.transaction_date);
+        return (Number(t.amount_in) || 0) > 0 && d >= sinceDate;
+      });
+      totalFetched += allTx.length;
+      let srcMatched = 0, srcDup = 0;
 
-      const { data: newId, error: insErr } = await supabase.rpc(
-        "insert_transaction_from_webhook",
-        {
-          p_payment_link_id: link.id,
-          p_merchant_id: merchant.id,
-          p_amount: Number(tx.amount_in),
-          p_transfer_content: tx.transaction_content,
-          p_bank_reference: ref,
-          p_status: "completed",
-          p_paid_at: new Date(tx.transaction_date).toISOString(),
+      for (const tx of allTx) {
+        const ref = tx.reference_number || String(tx.id);
+        const { data: existing } = await supabase
+          .from("transactions").select("id").eq("bank_reference", ref).maybeSingle();
+        if (existing) { duplicate++; srcDup++; continue; }
+
+        const contentUpper = (tx.transaction_content || "").toUpperCase();
+        const codeMatch = contentUpper.match(/PG-[A-Z0-9]{6,}/);
+        let link: any = null;
+        if (codeMatch) link = linksByCode.get(codeMatch[0]);
+        if (!link) {
+          const amtIn = Number(tx.amount_in);
+          link = (links || []).find((l) => l.status === "active" && Math.abs(Number(l.amount) - amtIn) < 1);
         }
-      );
-      if (insErr) {
-        console.error("Insert error:", insErr);
-        continue;
-      }
+        if (!link) { unmatched++; continue; }
 
-      if (!link.is_static) {
-        await supabase
-          .from("payment_links")
-          .update({ status: "completed" })
-          .eq("id", link.id);
+        const { data: newId, error: insErr } = await supabase.rpc(
+          "insert_transaction_from_webhook", {
+            p_payment_link_id: link.id,
+            p_merchant_id: merchant.id,
+            p_amount: Number(tx.amount_in),
+            p_transfer_content: tx.transaction_content,
+            p_bank_reference: ref,
+            p_status: "completed",
+            p_paid_at: new Date(tx.transaction_date).toISOString(),
+          }
+        );
+        if (insErr) { console.error("Insert error:", insErr); continue; }
+        if (!link.is_static) {
+          await supabase.from("payment_links").update({ status: "completed" }).eq("id", link.id);
+        }
+        matched++; srcMatched++;
+        matchedDetails.push({
+          transaction_id: newId, amount: Number(tx.amount_in),
+          code: link.code, paid_at: tx.transaction_date, via: src.origin,
+        });
       }
-      matched++;
-      matchedDetails.push({
-        transaction_id: newId,
-        amount: Number(tx.amount_in),
-        code: link.code,
-        paid_at: tx.transaction_date,
+      perSource.push({
+        account_number: src.account_number, origin: src.origin,
+        fetched: allTx.length, matched: srcMatched, duplicate: srcDup,
       });
     }
 
     return json({
       success: true,
-      total_fetched: allTx.length,
-      matched,
-      duplicate,
-      unmatched,
+      sources: sources.length,
+      total_fetched: totalFetched,
+      matched, duplicate, unmatched,
       since_hours: sinceHours,
+      per_source: perSource,
       matched_details: matchedDetails,
     });
   } catch (e) {
