@@ -1429,6 +1429,8 @@ export type Database = {
         }
         Returns: string
       }
+      get_admin_cron_health: { Args: never; Returns: Json }
+      get_admin_sepay_overview: { Args: never; Returns: Json }
       get_admin_stats: { Args: never; Returns: Json }
       get_bank_routing_stats: { Args: never; Returns: Json }
       get_customer_stats: { Args: never; Returns: Json }

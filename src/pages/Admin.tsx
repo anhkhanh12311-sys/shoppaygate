@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Shield, Users, BarChart3, Settings, LogOut,
   Menu, X, Activity, Database, Globe, Receipt,
-  Package, CreditCard, Store, Wallet, Webhook,
+  Package, CreditCard, Store, Wallet, Webhook, Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,9 +23,11 @@ import AdminStores from "@/components/admin/AdminStores";
 import AdminBalances from "@/components/admin/AdminBalances";
 import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
 import AdminMerchantCallbacks from "@/components/admin/AdminMerchantCallbacks";
+import AdminSepayMonitor from "@/components/admin/AdminSepayMonitor";
 
 const adminNavItems = [
   { value: "overview", label: "Tổng quan", icon: BarChart3 },
+  { value: "sepay", label: "Giám sát SePay", icon: Radio },
   { value: "transactions", label: "Giao dịch", icon: Receipt },
   { value: "users", label: "Người dùng", icon: Users },
   { value: "balances", label: "Số dư", icon: Wallet },
@@ -96,6 +98,8 @@ const Admin = () => {
     switch (activeTab) {
       case "overview":
         return <AdminOverview />;
+      case "sepay":
+        return <AdminSepayMonitor />;
       case "transactions":
         return <AdminTransactions />;
       case "users":
