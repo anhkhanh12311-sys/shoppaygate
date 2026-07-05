@@ -228,7 +228,7 @@ const Admin = () => {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ duration: 0.2 }}
-              className="fixed left-0 top-[57px] bottom-0 z-50 w-72 bg-card border-r shadow-xl overflow-y-auto"
+              className="fixed left-0 top-[65px] bottom-0 z-50 w-72 bg-card border-r border-border/60 shadow-2xl overflow-y-auto"
             >
               <nav className="p-4 space-y-5">
                 {adminNavSections.map((section) => (
@@ -237,20 +237,23 @@ const Admin = () => {
                       {section.label}
                     </p>
                     <div className="space-y-0.5">
-                      {section.items.map(item => (
-                        <button
-                          key={item.value}
-                          onClick={() => handleNav(item.value)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                            activeTab === item.value
-                              ? "gradient-primary text-primary-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </button>
-                      ))}
+                      {section.items.map(item => {
+                        const isActive = activeTab === item.value;
+                        return (
+                          <button
+                            key={item.value}
+                            onClick={() => handleNav(item.value)}
+                            className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                              isActive
+                                ? "bg-gradient-to-r from-primary/15 to-transparent text-primary active-glow"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            }`}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
