@@ -41,11 +41,35 @@ import TopupRentalCenter from "@/components/dashboard/TopupRentalCenter";
 
 const navSections = [
   {
-    label: "Chính",
+    label: "Tổng quan",
     items: [
       { value: "overview", label: "Tổng quan", icon: LayoutDashboard },
       { value: "ai-insights", label: "AI Insights", icon: Brain },
       { value: "balance", label: "Biến động số dư", icon: Activity },
+    ],
+  },
+  {
+    label: "Thu tiền",
+    items: [
+      { value: "create-link", label: "Tạo link", icon: Link2 },
+      { value: "qr-static", label: "QR tĩnh", icon: QrCode },
+      { value: "topup", label: "Nạp số dư", icon: Wallet },
+    ],
+  },
+  {
+    label: "Bán hàng",
+    items: [
+      { value: "products", label: "Sản phẩm", icon: Package },
+      { value: "orders", label: "Đơn hàng", icon: ShoppingBag },
+      { value: "store", label: "Cửa hàng", icon: Store },
+      { value: "vouchers", label: "Khuyến mãi", icon: Ticket },
+      { value: "customers", label: "Khách hàng", icon: Contact },
+      { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
+    ],
+  },
+  {
+    label: "Giao dịch",
+    items: [
       { value: "history", label: "Lịch sử GD", icon: History },
       { value: "bill-history", label: "Lịch sử bill", icon: ReceiptText },
       { value: "smart-filter", label: "Lọc thông minh", icon: Filter },
@@ -53,29 +77,15 @@ const navSections = [
     ],
   },
   {
-    label: "Thanh toán",
+    label: "Hệ thống",
     items: [
-      { value: "create-link", label: "Tạo link", icon: Link2 },
-      { value: "qr-static", label: "QR tĩnh", icon: QrCode },
-      { value: "topup", label: "Nạp số dư", icon: Wallet },
-      { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
-      { value: "topup-rental", label: "Trung tâm thuê nạp", icon: Rocket },
-      { value: "integrations", label: "Webhook & API", icon: Plug },
-    ],
-  },
-  {
-    label: "Quản lý",
-    items: [
-      { value: "store", label: "Cửa hàng", icon: Store },
-      { value: "products", label: "Sản phẩm", icon: Package },
-      { value: "orders", label: "Đơn hàng", icon: ShoppingBag },
-      { value: "vouchers", label: "Khuyến mãi", icon: Ticket },
-      { value: "staff", label: "Nhân viên", icon: Users },
-      { value: "customers", label: "Khách hàng", icon: Contact },
-      { value: "voice", label: "Loa thanh toán", icon: Volume2 },
-      { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "bank-routing", label: "Điều phối NH", icon: Network },
+      { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
+      { value: "topup-rental", label: "Trung tâm thuê nạp", icon: Rocket },
+      { value: "staff", label: "Nhân viên", icon: Users },
+      { value: "voice", label: "Loa thanh toán", icon: Volume2 },
+      { value: "integrations", label: "Webhook & API", icon: Plug },
       { value: "account", label: "Tài khoản", icon: User },
     ],
   },
