@@ -25,18 +25,44 @@ import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
 import AdminMerchantCallbacks from "@/components/admin/AdminMerchantCallbacks";
 import AdminSepayMonitor from "@/components/admin/AdminSepayMonitor";
 
-const adminNavItems = [
-  { value: "overview", label: "Tổng quan", icon: BarChart3 },
-  { value: "sepay", label: "Giám sát SePay", icon: Radio },
-  { value: "transactions", label: "Giao dịch", icon: Receipt },
-  { value: "users", label: "Người dùng", icon: Users },
-  { value: "balances", label: "Số dư", icon: Wallet },
-  { value: "plans", label: "Gói cước", icon: Package },
-  { value: "subscriptions", label: "Đăng ký gói", icon: CreditCard },
-  { value: "callbacks", label: "Callback merchant", icon: Webhook },
-  { value: "stores", label: "Cửa hàng", icon: Store },
-  { value: "system", label: "Hệ thống", icon: Settings },
+const adminNavSections = [
+  {
+    label: "Tổng quan",
+    items: [
+      { value: "overview", label: "Tổng quan", icon: BarChart3 },
+      { value: "sepay", label: "Giám sát SePay", icon: Radio },
+    ],
+  },
+  {
+    label: "Vận hành",
+    items: [
+      { value: "transactions", label: "Giao dịch", icon: Receipt },
+      { value: "callbacks", label: "Callback merchant", icon: Webhook },
+    ],
+  },
+  {
+    label: "Tài chính",
+    items: [
+      { value: "balances", label: "Số dư", icon: Wallet },
+      { value: "plans", label: "Gói cước", icon: Package },
+      { value: "subscriptions", label: "Đăng ký gói", icon: CreditCard },
+    ],
+  },
+  {
+    label: "Người dùng",
+    items: [
+      { value: "users", label: "Người dùng", icon: Users },
+      { value: "stores", label: "Cửa hàng", icon: Store },
+    ],
+  },
+  {
+    label: "Hệ thống",
+    items: [
+      { value: "system", label: "Cài đặt", icon: Settings },
+    ],
+  },
 ];
+const adminNavItems = adminNavSections.flatMap(s => s.items);
 
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
