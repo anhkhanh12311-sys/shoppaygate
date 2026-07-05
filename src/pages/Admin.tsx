@@ -153,28 +153,35 @@ const Admin = () => {
     }
   };
 
+  const currentLabel = adminNavItems.find(n => n.value === activeTab)?.label ?? "Tổng quan";
+
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-50 glass border-b">
-        <div className="px-4 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
+    <div className="midnight-shell min-h-screen">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+        <div className="px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button variant="ghost" size="icon" className="lg:hidden rounded-xl" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center">
+            <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
+              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary hidden sm:inline">
-                Admin Panel
+              <span className="text-lg font-display font-bold tracking-tight text-foreground hidden sm:inline">
+                ADMIN CONSOLE
               </span>
             </Link>
+            <nav className="hidden md:flex items-center gap-2 text-xs font-medium text-muted-foreground ml-4">
+              <span>Quản trị</span>
+              <span className="opacity-40">/</span>
+              <span className="text-accent">{currentLabel}</span>
+            </nav>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="rounded-xl">
               Dashboard
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} title="Đăng xuất">
+            <Button variant="ghost" size="icon" onClick={handleSignOut} title="Đăng xuất" className="rounded-xl">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
@@ -182,28 +189,31 @@ const Admin = () => {
       </header>
 
       <div className="flex">
-        <aside className="hidden lg:block w-60 border-r bg-card min-h-[calc(100vh-57px)] sticky top-[57px] overflow-y-auto">
-          <nav className="p-4 space-y-5">
+        <aside className="hidden lg:flex w-64 border-r border-border/60 bg-card min-h-[calc(100vh-65px)] sticky top-[65px] overflow-y-auto flex-col">
+          <nav className="p-4 pt-5 space-y-5 flex-1">
             {adminNavSections.map((section) => (
               <div key={section.label}>
                 <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
                   {section.label}
                 </p>
                 <div className="space-y-0.5">
-                  {section.items.map(item => (
-                    <button
-                      key={item.value}
-                      onClick={() => handleNav(item.value)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                        activeTab === item.value
-                          ? "gradient-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
+                  {section.items.map(item => {
+                    const isActive = activeTab === item.value;
+                    return (
+                      <button
+                        key={item.value}
+                        onClick={() => handleNav(item.value)}
+                        className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                          isActive
+                            ? "bg-gradient-to-r from-primary/15 to-transparent text-primary active-glow"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
@@ -218,7 +228,7 @@ const Admin = () => {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ duration: 0.2 }}
-              className="fixed left-0 top-[57px] bottom-0 z-50 w-72 bg-card border-r shadow-xl overflow-y-auto"
+              className="fixed left-0 top-[65px] bottom-0 z-50 w-72 bg-card border-r border-border/60 shadow-2xl overflow-y-auto"
             >
               <nav className="p-4 space-y-5">
                 {adminNavSections.map((section) => (
@@ -227,20 +237,23 @@ const Admin = () => {
                       {section.label}
                     </p>
                     <div className="space-y-0.5">
-                      {section.items.map(item => (
-                        <button
-                          key={item.value}
-                          onClick={() => handleNav(item.value)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                            activeTab === item.value
-                              ? "gradient-primary text-primary-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </button>
-                      ))}
+                      {section.items.map(item => {
+                        const isActive = activeTab === item.value;
+                        return (
+                          <button
+                            key={item.value}
+                            onClick={() => handleNav(item.value)}
+                            className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                              isActive
+                                ? "bg-gradient-to-r from-primary/15 to-transparent text-primary active-glow"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            }`}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

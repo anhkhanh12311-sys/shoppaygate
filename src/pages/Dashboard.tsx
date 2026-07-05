@@ -198,10 +198,10 @@ const Dashboard = () => {
                 <button
                   key={navItem.value}
                   onClick={() => handleNav(navItem.value)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  className={`w-full relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "gradient-primary text-primary-foreground shadow-md"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      ? "bg-gradient-to-r from-primary/15 to-transparent text-primary active-glow"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                   }`}
                 >
                   <navItem.icon className="h-4 w-4 shrink-0" />
@@ -234,11 +234,11 @@ const Dashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="midnight-shell min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-border/50">
-        <div className="px-4 lg:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+        <div className="px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             {isSmallScreen && (
               <Button
                 variant="ghost"
@@ -249,24 +249,31 @@ const Dashboard = () => {
                 {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
             )}
-            <Link to="/" className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-sm">
+            <Link to="/" className="flex items-center gap-2.5 shrink-0">
+              <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
                 <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold text-gradient-primary hidden sm:inline">
-                PayGate
+              <span className="text-lg font-display font-bold tracking-tight text-foreground hidden sm:inline">
+                PAYGATE
               </span>
             </Link>
+            <nav className="hidden md:flex items-center gap-2 text-xs font-medium text-muted-foreground ml-4">
+              <span>Trang chủ</span>
+              <span className="opacity-40">/</span>
+              <span className="text-accent">
+                {allNavItems.find(n => n.value === activeTab)?.label ?? "Tổng quan"}
+              </span>
+            </nav>
           </div>
           {isSmallScreen && (
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-sm font-semibold text-foreground truncate">
               {allNavItems.find(n => n.value === activeTab)?.label}
             </span>
           )}
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="font-semibold text-sm">{merchant.business_name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="font-semibold text-sm text-foreground truncate max-w-[160px]">{merchant.business_name}</p>
+              <p className="text-[11px] text-muted-foreground truncate max-w-[160px]">{user.email}</p>
             </div>
             <Button variant="ghost" size="icon" onClick={handleSignOut} title="Đăng xuất" className="rounded-xl">
               <LogOut className="h-5 w-5" />
@@ -277,8 +284,8 @@ const Dashboard = () => {
 
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-60 border-r border-border/50 bg-card/50 min-h-[calc(100vh-57px)] sticky top-[57px] overflow-y-auto">
-          <nav className="p-3 pt-4">
+        <aside className="hidden lg:flex w-64 border-r border-border/60 bg-card min-h-[calc(100vh-65px)] sticky top-[65px] overflow-y-auto flex-col">
+          <nav className="p-4 pt-5 flex-1">
             {renderSidebarNav()}
           </nav>
         </aside>
