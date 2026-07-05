@@ -220,20 +220,29 @@ const Admin = () => {
               transition={{ duration: 0.2 }}
               className="fixed left-0 top-[57px] bottom-0 z-50 w-72 bg-card border-r shadow-xl overflow-y-auto"
             >
-              <nav className="p-4 space-y-1">
-                {adminNavItems.map(item => (
-                  <button
-                    key={item.value}
-                    onClick={() => handleNav(item.value)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                      activeTab === item.value
-                        ? "gradient-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </button>
+              <nav className="p-4 space-y-5">
+                {adminNavSections.map((section) => (
+                  <div key={section.label}>
+                    <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                      {section.label}
+                    </p>
+                    <div className="space-y-0.5">
+                      {section.items.map(item => (
+                        <button
+                          key={item.value}
+                          onClick={() => handleNav(item.value)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                            activeTab === item.value
+                              ? "gradient-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </nav>
             </motion.aside>
