@@ -38,6 +38,7 @@ import OrdersManagement from "@/components/dashboard/OrdersManagement";
 import VouchersManagement from "@/components/dashboard/VouchersManagement";
 import BankRoutingManager from "@/components/dashboard/BankRoutingManager";
 import TopupRentalCenter from "@/components/dashboard/TopupRentalCenter";
+import RoutingPlayground from "@/components/dashboard/RoutingPlayground";
 
 const navSections = [
   {
