@@ -1447,6 +1447,20 @@ export type Database = {
         Args: { p_merchant_id: string }
         Returns: Json
       }
+      get_mismatched_transactions: {
+        Args: { p_limit?: number; p_merchant_id: string }
+        Returns: {
+          amount: number
+          bank_reference: string
+          created_at: string
+          expected_code: string
+          paid_at: string
+          payment_link_id: string
+          status: string
+          transaction_id: string
+          transfer_content: string
+        }[]
+      }
       get_my_merchant_secrets: {
         Args: never
         Returns: {
