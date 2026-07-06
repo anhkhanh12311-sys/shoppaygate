@@ -178,6 +178,7 @@ const Dashboard = () => {
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
     { key: "bank-routing", component: <BankRoutingManager /> },
+    { key: "routing-playground", component: <RoutingPlayground /> },
     { key: "create-link", component: <CreatePaymentLink /> },
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },
