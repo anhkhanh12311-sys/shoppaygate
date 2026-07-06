@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import PaymentPage from "./pages/PaymentPage";
+import PaymentPage2 from "./pages/PaymentPage2";
 import StorePage from "./pages/StorePage";
 import BillPublic from "./pages/BillPublic";
 import NotFound from "./pages/NotFound";
