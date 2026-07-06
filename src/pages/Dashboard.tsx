@@ -38,6 +38,7 @@ import OrdersManagement from "@/components/dashboard/OrdersManagement";
 import VouchersManagement from "@/components/dashboard/VouchersManagement";
 import BankRoutingManager from "@/components/dashboard/BankRoutingManager";
 import TopupRentalCenter from "@/components/dashboard/TopupRentalCenter";
+import RoutingPlayground from "@/components/dashboard/RoutingPlayground";
 
 const navSections = [
   {
@@ -81,6 +82,7 @@ const navSections = [
     items: [
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "bank-routing", label: "Điều phối NH", icon: Network },
+      { value: "routing-playground", label: "Routing Playground", icon: Sparkles },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
       { value: "topup-rental", label: "Trung tâm thuê nạp", icon: Rocket },
       { value: "staff", label: "Nhân viên", icon: Users },
@@ -176,6 +178,7 @@ const Dashboard = () => {
     { key: "account", component: <AccountSettings /> },
     { key: "settings", component: <BankSettings /> },
     { key: "bank-routing", component: <BankRoutingManager /> },
+    { key: "routing-playground", component: <RoutingPlayground /> },
     { key: "create-link", component: <CreatePaymentLink /> },
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },

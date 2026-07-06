@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import PaymentPage from "./pages/PaymentPage";
+import PaymentPage2 from "./pages/PaymentPage2";
 import StorePage from "./pages/StorePage";
 import BillPublic from "./pages/BillPublic";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/pay/:code" element={<PaymentPage />} />
+            <Route path="/pay2/:code" element={<PaymentPage2 />} />
             <Route path="/store/:slug" element={<StorePage />} />
             <Route path="/bill/:id" element={<BillPublic />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
