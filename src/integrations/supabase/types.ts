@@ -140,14 +140,18 @@ export type Database = {
       merchant_banks: {
         Row: {
           auto_route_enabled: boolean
+          avg_settlement_seconds: number
           bank_account_name: string
           bank_account_number: string
           bank_name: string
           created_at: string
           current_daily_received: number
           daily_limit: number | null
+          fee_weight: number
+          health_status: string
           id: string
           is_default: boolean
+          last_health_check_at: string | null
           last_reset_date: string | null
           last_used_at: string | null
           merchant_id: string
@@ -158,14 +162,18 @@ export type Database = {
         }
         Insert: {
           auto_route_enabled?: boolean
+          avg_settlement_seconds?: number
           bank_account_name: string
           bank_account_number: string
           bank_name: string
           created_at?: string
           current_daily_received?: number
           daily_limit?: number | null
+          fee_weight?: number
+          health_status?: string
           id?: string
           is_default?: boolean
+          last_health_check_at?: string | null
           last_reset_date?: string | null
           last_used_at?: string | null
           merchant_id: string
@@ -176,14 +184,18 @@ export type Database = {
         }
         Update: {
           auto_route_enabled?: boolean
+          avg_settlement_seconds?: number
           bank_account_name?: string
           bank_account_number?: string
           bank_name?: string
           created_at?: string
           current_daily_received?: number
           daily_limit?: number | null
+          fee_weight?: number
+          health_status?: string
           id?: string
           is_default?: boolean
+          last_health_check_at?: string | null
           last_reset_date?: string | null
           last_used_at?: string | null
           merchant_id?: string
@@ -1617,7 +1629,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      mark_bank_health: {
+        Args: { p_bank_id: string; p_status: string }
+        Returns: undefined
+      }
       pick_best_bank: {
+        Args: { p_amount?: number; p_merchant_id: string }
+        Returns: string
+      }
+      pick_best_bank_v2: {
         Args: { p_amount?: number; p_merchant_id: string }
         Returns: string
       }
@@ -1662,6 +1682,7 @@ export type Database = {
         Args: { p_callback_id: string }
         Returns: undefined
       }
+      simulate_bank_routing: { Args: { p_amount?: number }; Returns: Json }
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: string
@@ -1677,6 +1698,17 @@ export type Database = {
           p_bank_id: string
           p_daily_limit: number
           p_priority: number
+        }
+        Returns: undefined
+      }
+      update_bank_routing_v2: {
+        Args: {
+          p_auto_route?: boolean
+          p_avg_settlement_seconds?: number
+          p_bank_id: string
+          p_daily_limit?: number
+          p_fee_weight?: number
+          p_priority?: number
         }
         Returns: undefined
       }
