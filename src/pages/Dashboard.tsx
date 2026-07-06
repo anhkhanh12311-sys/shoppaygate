@@ -82,6 +82,7 @@ const navSections = [
     items: [
       { value: "settings", label: "Ngân hàng", icon: Settings },
       { value: "bank-routing", label: "Điều phối NH", icon: Network },
+      { value: "routing-playground", label: "Routing Playground", icon: Sparkles },
       { value: "gateway-rental", label: "Cho thuê cổng", icon: Rocket },
       { value: "topup-rental", label: "Trung tâm thuê nạp", icon: Rocket },
       { value: "staff", label: "Nhân viên", icon: Users },
