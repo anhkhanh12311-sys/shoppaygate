@@ -6,6 +6,7 @@ import {
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
   Receipt, ReceiptText, Contact, Package, ShoppingBag, Ticket, Network,
+  Repeat, Split, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
