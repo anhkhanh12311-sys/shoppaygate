@@ -40,6 +40,9 @@ import VouchersManagement from "@/components/dashboard/VouchersManagement";
 import BankRoutingManager from "@/components/dashboard/BankRoutingManager";
 import TopupRentalCenter from "@/components/dashboard/TopupRentalCenter";
 import RoutingPlayground from "@/components/dashboard/RoutingPlayground";
+import SubscriptionsManagement from "@/components/dashboard/SubscriptionsManagement";
+import SplitPaymentRules from "@/components/dashboard/SplitPaymentRules";
+import InvoicesPro from "@/components/dashboard/InvoicesPro";
 
 const navSections = [
   {
