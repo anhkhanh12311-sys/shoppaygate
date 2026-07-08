@@ -6,6 +6,7 @@ import {
   History, LogOut, User, Menu, X, Shield, Store,
   Activity, Filter, Users, Volume2, Brain, Database, Rocket, Wallet, Plug,
   Receipt, ReceiptText, Contact, Package, ShoppingBag, Ticket, Network,
+  Repeat, Split, FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,6 +40,9 @@ import VouchersManagement from "@/components/dashboard/VouchersManagement";
 import BankRoutingManager from "@/components/dashboard/BankRoutingManager";
 import TopupRentalCenter from "@/components/dashboard/TopupRentalCenter";
 import RoutingPlayground from "@/components/dashboard/RoutingPlayground";
+import SubscriptionsManagement from "@/components/dashboard/SubscriptionsManagement";
+import SplitPaymentRules from "@/components/dashboard/SplitPaymentRules";
+import InvoicesPro from "@/components/dashboard/InvoicesPro";
 
 const navSections = [
   {
@@ -66,6 +70,14 @@ const navSections = [
       { value: "vouchers", label: "Khuyến mãi", icon: Ticket },
       { value: "customers", label: "Khách hàng", icon: Contact },
       { value: "branded-receipt", label: "Mẫu hoá đơn", icon: Receipt },
+    ],
+  },
+  {
+    label: "Doanh nghiệp",
+    items: [
+      { value: "invoices", label: "Hóa đơn Pro", icon: FileText },
+      { value: "subscriptions", label: "Đăng ký định kỳ", icon: Repeat },
+      { value: "split-rules", label: "Chia doanh thu", icon: Split },
     ],
   },
   {
@@ -179,6 +191,9 @@ const Dashboard = () => {
     { key: "settings", component: <BankSettings /> },
     { key: "bank-routing", component: <BankRoutingManager /> },
     { key: "routing-playground", component: <RoutingPlayground /> },
+    { key: "invoices", component: <InvoicesPro /> },
+    { key: "subscriptions", component: <SubscriptionsManagement /> },
+    { key: "split-rules", component: <SplitPaymentRules /> },
     { key: "create-link", component: <CreatePaymentLink /> },
     { key: "qr-static", component: <CreatePaymentLink isStatic /> },
     { key: "topup", component: <TopupBalance /> },

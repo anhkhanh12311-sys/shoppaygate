@@ -74,6 +74,91 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_subscriptions: {
+        Row: {
+          charge_count: number
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string | null
+          description: string | null
+          id: string
+          interval_count: number
+          interval_unit: string
+          last_charged_at: string | null
+          merchant_id: string
+          next_charge_at: string
+          plan_name: string
+          price: number
+          status: string
+          total_charged: number
+          updated_at: string
+        }
+        Insert: {
+          charge_count?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          description?: string | null
+          id?: string
+          interval_count?: number
+          interval_unit?: string
+          last_charged_at?: string | null
+          merchant_id: string
+          next_charge_at?: string
+          plan_name: string
+          price: number
+          status?: string
+          total_charged?: number
+          updated_at?: string
+        }
+        Update: {
+          charge_count?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          description?: string | null
+          id?: string
+          interval_count?: number
+          interval_unit?: string
+          last_charged_at?: string | null
+          merchant_id?: string
+          next_charge_at?: string
+          plan_name?: string
+          price?: number
+          status?: string
+          total_charged?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_subscriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_subscriptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_subscriptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -133,6 +218,119 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          currency: string
+          customer_address: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string | null
+          discount: number
+          due_date: string | null
+          id: string
+          invoice_number: string
+          items: Json
+          last_reminder_at: string | null
+          merchant_id: string
+          notes: string | null
+          paid_at: string | null
+          payment_link_id: string | null
+          reminder_count: number
+          sent_at: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          tax_percent: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          discount?: number
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          items?: Json
+          last_reminder_at?: string | null
+          merchant_id: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_link_id?: string | null
+          reminder_count?: number
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_percent?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          discount?: number
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          items?: Json
+          last_reminder_at?: string | null
+          merchant_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_link_id?: string | null
+          reminder_count?: number
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_percent?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payment_link_id_fkey"
+            columns: ["payment_link_id"]
+            isOneToOne: false
+            referencedRelation: "payment_links"
             referencedColumns: ["id"]
           },
         ]
@@ -954,6 +1152,129 @@ export type Database = {
         }
         Relationships: []
       }
+      split_executions: {
+        Row: {
+          amount_total: number
+          breakdown: Json
+          created_at: string
+          id: string
+          merchant_id: string
+          split_rule_id: string | null
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount_total: number
+          breakdown?: Json
+          created_at?: string
+          id?: string
+          merchant_id: string
+          split_rule_id?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount_total?: number
+          breakdown?: Json
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          split_rule_id?: string | null
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_executions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_executions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_executions_split_rule_id_fkey"
+            columns: ["split_rule_id"]
+            isOneToOne: false
+            referencedRelation: "split_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_executions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          merchant_id: string
+          name: string
+          payment_link_id: string | null
+          recipients: Json
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          merchant_id: string
+          name: string
+          payment_link_id?: string | null
+          recipients?: Json
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          merchant_id?: string
+          name?: string
+          payment_link_id?: string | null
+          recipients?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_rules_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_rules_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_rules_payment_link_id_fkey"
+            columns: ["payment_link_id"]
+            isOneToOne: false
+            referencedRelation: "payment_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           code: string
@@ -1418,6 +1739,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      compute_next_charge: {
+        Args: { p_count: number; p_from: string; p_unit: string }
+        Returns: string
+      }
       count_merchant_payment_links: {
         Args: {
           p_is_static?: boolean
@@ -1441,6 +1766,7 @@ export type Database = {
         }
         Returns: string
       }
+      generate_invoice_number: { Args: never; Returns: string }
       get_admin_cron_health: { Args: never; Returns: Json }
       get_admin_sepay_overview: { Args: never; Returns: Json }
       get_admin_stats: { Args: never; Returns: Json }
@@ -1591,6 +1917,14 @@ export type Database = {
         }
         Returns: string
       }
+      invoice_create_payment_link: {
+        Args: { p_invoice_id: string }
+        Returns: string
+      }
+      invoice_mark_reminder: {
+        Args: { p_invoice_id: string }
+        Returns: undefined
+      }
       is_merchant_owner: { Args: { merchant_id: string }; Returns: boolean }
       link_bank_sepay: {
         Args: {
@@ -1599,6 +1933,35 @@ export type Database = {
           p_sepay_api_key: string
         }
         Returns: undefined
+      }
+      list_due_subscriptions: {
+        Args: { p_limit?: number }
+        Returns: {
+          charge_count: number
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string | null
+          description: string | null
+          id: string
+          interval_count: number
+          interval_unit: string
+          last_charged_at: string | null
+          merchant_id: string
+          next_charge_at: string
+          plan_name: string
+          price: number
+          status: string
+          total_charged: number
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "customer_subscriptions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       list_topup_callbacks: {
         Args: { p_limit?: number; p_status?: string }
@@ -1641,6 +2004,10 @@ export type Database = {
         Args: { p_amount?: number; p_merchant_id: string }
         Returns: string
       }
+      preview_split: {
+        Args: { p_amount: number; p_rule_id: string }
+        Returns: Json
+      }
       public_create_order:
         | {
             Args: {
@@ -1682,6 +2049,22 @@ export type Database = {
         Args: { p_callback_id: string }
         Returns: undefined
       }
+      save_invoice: {
+        Args: {
+          p_customer_address: string
+          p_customer_email: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_discount: number
+          p_due_date: string
+          p_id: string
+          p_items: Json
+          p_notes: string
+          p_status: string
+          p_tax_percent: number
+        }
+        Returns: string
+      }
       simulate_bank_routing: { Args: { p_amount?: number }; Returns: Json }
       subscribe_to_plan: {
         Args: { p_billing_cycle?: string; p_plan_code: string }
@@ -1691,6 +2074,7 @@ export type Database = {
         Args: { p_billing_cycle?: string; p_plan_code: string }
         Returns: Json
       }
+      subscription_charge: { Args: { p_sub_id: string }; Returns: string }
       sync_customers_from_transactions: { Args: never; Returns: number }
       update_bank_routing: {
         Args: {
