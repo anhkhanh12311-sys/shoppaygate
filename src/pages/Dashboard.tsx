@@ -73,6 +73,14 @@ const navSections = [
     ],
   },
   {
+    label: "Doanh nghiệp",
+    items: [
+      { value: "invoices", label: "Hóa đơn Pro", icon: FileText },
+      { value: "subscriptions", label: "Đăng ký định kỳ", icon: Repeat },
+      { value: "split-rules", label: "Chia doanh thu", icon: Split },
+    ],
+  },
+  {
     label: "Giao dịch",
     items: [
       { value: "history", label: "Lịch sử GD", icon: History },
