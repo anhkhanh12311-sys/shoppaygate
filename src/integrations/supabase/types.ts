@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       balance_topups: {
         Row: {
           amount: number
@@ -1700,12 +1736,129 @@ export type Database = {
         Args: { p_amount: number; p_merchant_id: string; p_note: string }
         Returns: number
       }
+      admin_charge_subscription: { Args: { p_sub_id: string }; Returns: string }
       admin_grant_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
           p_user_id: string
         }
         Returns: undefined
+      }
+      admin_list_audit_logs: {
+        Args: { p_limit?: number }
+        Returns: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_type: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      admin_list_cron_jobs: { Args: never; Returns: Json }
+      admin_list_invoices: {
+        Args: { p_limit?: number; p_status?: string }
+        Returns: {
+          business_name: string
+          created_at: string
+          customer_name: string
+          due_date: string
+          id: string
+          invoice_number: string
+          merchant_id: string
+          reminder_count: number
+          status: string
+          total: number
+        }[]
+      }
+      admin_list_orders: {
+        Args: { p_limit?: number; p_search?: string; p_status?: string }
+        Returns: {
+          business_name: string
+          channel: string
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          merchant_id: string
+          order_code: string
+          paid_at: string
+          status: string
+          total: number
+        }[]
+      }
+      admin_list_products: {
+        Args: { p_limit?: number; p_search?: string }
+        Returns: {
+          business_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          merchant_id: string
+          name: string
+          price: number
+          sale_price: number
+          sold_count: number
+          stock: number
+          unlimited_stock: boolean
+        }[]
+      }
+      admin_list_split_executions: {
+        Args: { p_limit?: number }
+        Returns: {
+          amount_total: number
+          breakdown: Json
+          business_name: string
+          created_at: string
+          id: string
+          merchant_id: string
+          status: string
+          transaction_id: string
+        }[]
+      }
+      admin_list_subscriptions: {
+        Args: { p_limit?: number }
+        Returns: {
+          business_name: string
+          charge_count: number
+          customer_name: string
+          id: string
+          interval_count: number
+          interval_unit: string
+          last_charged_at: string
+          merchant_id: string
+          next_charge_at: string
+          plan_name: string
+          price: number
+          status: string
+          total_charged: number
+        }[]
+      }
+      admin_list_vouchers: {
+        Args: { p_limit?: number }
+        Returns: {
+          business_name: string
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          merchant_id: string
+          name: string
+          type: Database["public"]["Enums"]["voucher_type"]
+          usage_limit: number
+          used_count: number
+          value: number
+        }[]
       }
       admin_revoke_role: {
         Args: {
@@ -1714,12 +1867,24 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_sales_overview: { Args: never; Returns: Json }
       admin_set_merchant_webhook: {
         Args: {
           p_enabled: boolean
           p_merchant_id: string
           p_webhook_url: string
         }
+        Returns: undefined
+      }
+      admin_set_order_status: {
+        Args: {
+          p_order_id: string
+          p_status: Database["public"]["Enums"]["order_status"]
+        }
+        Returns: undefined
+      }
+      admin_toggle_voucher: {
+        Args: { p_active: boolean; p_voucher_id: string }
         Returns: undefined
       }
       admin_upsert_merchant_callback: {
@@ -1992,10 +2157,21 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      log_admin_action: {
+        Args: {
+          p_action: string
+          p_description?: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_type?: string
+        }
+        Returns: string
+      }
       mark_bank_health: {
         Args: { p_bank_id: string; p_status: string }
         Returns: undefined
       }
+      mark_overdue_invoices: { Args: never; Returns: number }
       pick_best_bank: {
         Args: { p_amount?: number; p_merchant_id: string }
         Returns: string

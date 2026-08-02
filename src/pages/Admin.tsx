@@ -5,6 +5,7 @@ import {
   Shield, Users, BarChart3, Settings, LogOut,
   Menu, X, Activity, Database, Globe, Receipt,
   Package, CreditCard, Store, Wallet, Webhook, Radio,
+  ShoppingBag, Ticket, FileText, Split, Clock, ScrollText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -24,6 +25,12 @@ import AdminBalances from "@/components/admin/AdminBalances";
 import AdminSystemSettings from "@/components/admin/AdminSystemSettings";
 import AdminMerchantCallbacks from "@/components/admin/AdminMerchantCallbacks";
 import AdminSepayMonitor from "@/components/admin/AdminSepayMonitor";
+import AdminSales from "@/components/admin/AdminSales";
+import AdminVouchers from "@/components/admin/AdminVouchers";
+import AdminBilling from "@/components/admin/AdminBilling";
+import AdminSplits from "@/components/admin/AdminSplits";
+import AdminCronJobs from "@/components/admin/AdminCronJobs";
+import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
 
 const adminNavSections = [
   {
@@ -38,6 +45,7 @@ const adminNavSections = [
     items: [
       { value: "transactions", label: "Giao dịch", icon: Receipt },
       { value: "callbacks", label: "Callback merchant", icon: Webhook },
+      { value: "cron", label: "Cron & Jobs", icon: Clock },
     ],
   },
   {
@@ -46,6 +54,15 @@ const adminNavSections = [
       { value: "balances", label: "Số dư", icon: Wallet },
       { value: "plans", label: "Gói cước", icon: Package },
       { value: "subscriptions", label: "Đăng ký gói", icon: CreditCard },
+      { value: "billing", label: "Hóa đơn & Định kỳ", icon: FileText },
+      { value: "splits", label: "Chia doanh thu", icon: Split },
+    ],
+  },
+  {
+    label: "Bán hàng",
+    items: [
+      { value: "sales", label: "Đơn & Sản phẩm", icon: ShoppingBag },
+      { value: "vouchers", label: "Voucher", icon: Ticket },
     ],
   },
   {
@@ -59,10 +76,12 @@ const adminNavSections = [
     label: "Hệ thống",
     items: [
       { value: "system", label: "Cài đặt", icon: Settings },
+      { value: "audit", label: "Nhật ký hoạt động", icon: ScrollText },
     ],
   },
 ];
 const adminNavItems = adminNavSections.flatMap(s => s.items);
+
 
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -148,6 +167,19 @@ const Admin = () => {
         return <AdminMerchantCallbacks />;
       case "system":
         return <AdminSystemSettings />;
+      case "cron":
+        return <AdminCronJobs />;
+      case "billing":
+        return <AdminBilling />;
+      case "splits":
+        return <AdminSplits />;
+      case "sales":
+        return <AdminSales />;
+      case "vouchers":
+        return <AdminVouchers />;
+      case "audit":
+        return <AdminAuditLogs />;
+
       default:
         return null;
     }
