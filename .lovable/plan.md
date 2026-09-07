@@ -1,65 +1,55 @@
 ## Mục tiêu
 
-Đóng nốt phần "còn thiếu" của Sprint 4 (automation chưa chạy tự động), làm Admin Console đầy đủ quyền điều khiển hệ thống, và làm mới giao diện theo hướng gọn – khoa học – chuyên nghiệp.
+Chủ shop **chỉ cần thêm tài khoản ngân hàng** là tạo được link/QR thanh toán gửi khách, và hệ thống tự xác nhận "đã nhận tiền" gần như tức thì — không ai phải tự đi lấy khóa API SePay nữa. Kèm dọn gọn giao diện, giữ đúng tông màu và font hiện tại.
+
+Tiền vẫn chảy trực tiếp vào tài khoản của chủ shop.
 
 ---
 
-## Phần 1 — Hoàn thiện automation còn thiếu
+## Phần 1 — Cấu hình SePay dùng chung ở cấp hệ thống
 
-### 1.1 Recurring Billing tự chạy
-- Edge function mới `recurring-billing-cron`: lấy các subscription tới hạn qua `list_due_subscriptions`, gọi `subscription_charge` cho từng cái, sinh payment link, ghi log kết quả.
-- pg_cron chạy hằng ngày (03:00 giờ VN) gọi function.
-- UI "Đăng ký định kỳ": thêm cột "Lần thu gần nhất / kết quả" + nút "Thu ngay" cho 1 subscription.
+- Khóa SePay của nền tảng lưu ở phía máy chủ (secret + bảng cấu hình hệ thống), không bao giờ gửi xuống trình duyệt.
+- Trang Quản trị có mục **"Kết nối SePay hệ thống"**: nhập/cập nhật khóa, nút kiểm tra kết nối, hiển thị danh sách tài khoản ngân hàng mà khóa này đang theo dõi được.
+- Chủ shop: bỏ hẳn ô nhập khóa API ở phần cài đặt (vẫn giữ chế độ "dùng khóa riêng" cho ai đã có, đặt ở mục nâng cao — hệ thống ưu tiên khóa riêng nếu có, không thì dùng khóa hệ thống).
 
-### 1.2 Split Payment tự áp dụng
-- Trigger trên `transactions` khi `status` chuyển sang hoàn tất: tìm `split_rules` khớp (theo `payment_link_id`, fallback rule mặc định) → tạo `split_executions` + cộng `balance_topups` cho từng recipient.
-- UI "Chia doanh thu": thêm tab "Lịch sử chia" đọc từ `split_executions`.
+**Một điểm cần nói rõ:** SePay chỉ đọc được biến động của những tài khoản ngân hàng đã được thêm vào chính tài khoản SePay đó. Nên với mỗi số tài khoản mới của chủ shop, cần một lần thêm tài khoản đó vào SePay của nền tảng. Vì vậy luồng sẽ là:
 
-### 1.3 Nhắc nợ hóa đơn
-- Cron hằng ngày quét `invoices` quá hạn, tăng `reminder_count` qua `invoice_mark_reminder`, đánh dấu `overdue`.
-- UI Hóa đơn Pro: badge "Quá hạn" + bộ lọc theo trạng thái.
+```text
+Chủ shop thêm TK ngân hàng
+        ↓  (tự đối chiếu với danh sách TK mà khóa hệ thống thấy được)
+Thấy → "Đã xác minh"  ✅ dùng ngay
+Không thấy → "Chờ kích hoạt" ⏳ admin thêm TK vào SePay hệ thống, hệ thống tự chuyển sang Đã xác minh
+```
 
----
+- Việc đối chiếu chạy tự động: ngay khi thêm TK và định kỳ theo tác vụ nền, nên đa số trường hợp chuyển sang "Đã xác minh" mà không cần bấm gì.
+- Trong lúc "Chờ kích hoạt", QR vẫn tạo và khách vẫn chuyển được tiền; chỉ phần tự xác nhận là chưa bật — trang thanh toán ghi rõ và có nút "Tôi đã chuyển" để chủ shop đối chiếu tay.
 
-## Phần 2 — Admin Console đầy đủ
+## Phần 2 — Tạo QR không cần khóa API
 
-Bổ sung các module admin còn thiếu (hiện chỉ có 10 module, chưa quản được phần bán hàng và automation):
+- QR chuyển khoản (VietQR) sinh từ mã ngân hàng + số TK + số tiền + mã tham chiếu — không phụ thuộc API. Chuẩn hóa lại một chỗ duy nhất để trang thanh toán, trang thanh toán 2.0, hóa đơn và biên nhận dùng chung.
+- Bổ sung bảng mã ngân hàng đầy đủ (mã BIN) để QR luôn đúng, thay danh sách rút gọn hiện tại.
+- Thêm nút tải QR và sao chép link ngay tại bước tạo link.
 
-| Module mới | Nội dung |
-|---|---|
-| **Đơn hàng & Sản phẩm** | Xem toàn hệ thống, filter theo merchant/trạng thái, đổi trạng thái đơn |
-| **Voucher toàn cục** | Xem voucher mọi shop, bật/tắt, xem lượt dùng |
-| **Hóa đơn & Đăng ký định kỳ** | Danh sách toàn hệ thống, trạng thái thu tiền, nút thu thủ công |
-| **Split & Đối soát** | Lịch sử `split_executions`, tổng tiền đã chia theo shop |
-| **Cron & Jobs** | Danh sách job pg_cron, lần chạy gần nhất, nút chạy tay từng job |
-| **Nhật ký hoạt động** | Bảng `audit_logs` mới ghi các hành động admin (đổi số dư, cấp quyền, đổi cấu hình) |
+## Phần 3 — Xác nhận gần tức thì
 
-Mỗi module là 1 file riêng trong `src/components/admin/`, dữ liệu qua RPC admin-only riêng để dễ mở rộng/fix.
+- Tác vụ nền quét giao dịch chờ: rút xuống mỗi 30 giây, gom theo khóa (một lần gọi cho nhiều shop dùng khóa hệ thống) để không gọi SePay quá nhiều.
+- Trang thanh toán: theo dõi thay đổi trực tiếp từ máy chủ, cộng thêm một nhịp hỏi lại mỗi 5 giây khi trang đang mở; báo trạng thái bằng nhãn Đang chờ → Đã nhận → Hết hạn.
+- Webhook SePay: nhận diện shop theo **số tài khoản nhận** (hiện chỉ theo khóa webhook riêng), giữ chống trùng theo mã tham chiếu như hiện tại.
+- Mỗi TK có ô **"Tình trạng tín hiệu"**: xác minh / lần nhận tín hiệu gần nhất / lỗi nếu có, kèm hướng xử lý bằng tiếng Việt.
 
-Menu Admin sắp lại 6 nhóm: Tổng quan · Vận hành · Tài chính · Bán hàng · Người dùng · Hệ thống.
+## Phần 4 — Dọn gọn giao diện
 
----
-
-## Phần 3 — Giao diện mới
-
-- **KPI card thống nhất**: 1 component `StatCard` dùng chung cho cả Dashboard và Admin (số lớn, delta, sparkline nhỏ), thay các card rời rạc hiện tại.
-- **Bảng dữ liệu thống nhất**: `DataTableShell` — header sticky, hàng cao 44px, trạng thái dạng pill, empty state có icon + CTA, skeleton khi load.
-- **Toolbar chuẩn**: mỗi trang có 1 hàng toolbar (tìm kiếm · filter · refresh · export) đặt cùng vị trí, không còn nút rải rác.
-- **Mobile**: bảng tự chuyển sang dạng card list dưới 640px; nav dưới cùng cho 5 mục hay dùng nhất.
-- Giữ nguyên palette/font hiện tại (midnight + Space Grotesk), chỉ chuẩn hóa spacing, bán kính và trạng thái active.
-
----
-
-## Phần 4 — Kiểm thử
-
-Playwright headless đi qua: Dashboard 23 tab, Admin toàn bộ module, `/pay2/:code`, storefront + checkout. Ghi console/network error, fix rồi chạy lại. Báo cáo cuối bằng bảng pass/fail.
+- Cài đặt ngân hàng dựng lại theo dạng danh sách thẻ gọn: tên ngân hàng, số TK, huy hiệu Mặc định / Đã xác minh, thao tác nằm trong menu ba chấm; bước thêm TK rút còn 3 ô.
+- Đồng bộ thẻ số liệu và bảng dữ liệu về bộ dùng chung đã có (StatCard, DataTableShell) cho các trang còn dùng thẻ rời.
+- Chuẩn hóa khoảng cách, bán kính, trạng thái đang chọn; giữ nguyên bảng màu midnight và font hiện tại.
+- Trên máy điện thoại: bảng chuyển thành danh sách thẻ, thanh công cụ một hàng.
 
 ---
 
 ## Ghi chú kỹ thuật
 
-- Bảng mới `audit_logs`: đủ `GRANT` + RLS chỉ admin đọc, ghi qua SECURITY DEFINER.
-- RPC admin mới đều kiểm tra `has_role(auth.uid(),'admin')` và thu hồi EXECUTE của `anon`/`PUBLIC`.
-- Edge function mới `recurring-billing-cron`, `invoice-reminder-cron`; không sửa `sepay-webhook` / `check-pending-transactions`.
-- Cron job tạo bằng insert tool (chứa URL + key riêng của project), không nằm trong migration.
-- Chia 3 commit: automation → admin → UI, để dễ review và rollback.
+- Bảng `merchant_banks` thêm: `verification_status`, `verified_at`, `sepay_account_id` (đã có), `last_signal_at`; RPC `link_bank_to_platform_sepay`, `refresh_bank_verification`, và RPC admin `admin_platform_sepay_status`. Đủ GRANT + RLS, RPC admin kiểm tra `has_role`.
+- Khóa nền tảng: secret `SEPAY_PLATFORM_API_KEY` (thêm qua công cụ secret), chỉ đọc trong edge function.
+- Edge function mới `sepay-bank-verify` (đối chiếu TK với SePay). Sửa `check-pending-transactions` để dùng khóa nền tảng làm mặc định và gom theo khóa; sửa `sepay-webhook` nhận diện theo số TK.
+- Thêm `src/lib/vietqr.ts` (bảng BIN + hàm sinh URL QR), thay các chỗ tự ghép URL rải rác.
+- Không sửa file tự sinh (`client.ts`, `types.ts`, `.env`).
